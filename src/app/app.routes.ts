@@ -97,6 +97,56 @@ export const routes: Routes = [
         path: 'payments',
         loadComponent: () =>
           import('./features/tenant/payments/payments.component').then(m => m.PaymentsComponent)
+      },
+      {
+        path: 'sessions',
+        loadComponent: () =>
+          import('./features/tenant/sessions/sessions.component').then(m => m.SessionsComponent)
+      }
+    ]
+  },
+  {
+    path: 'student',
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['STUDENT'] },
+    loadComponent: () =>
+      import('./features/student/layout/student-layout.component').then(m => m.StudentLayoutComponent),
+    children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./features/student/dashboard/dashboard.component').then(m => m.DashboardComponent)
+      },
+      {
+        path: 'sessions',
+        loadComponent: () =>
+          import('./features/student/sessions/sessions.component').then(m => m.SessionsComponent)
+      },
+      {
+        path: 'exams',
+        loadComponent: () =>
+          import('./features/student/exams/exams.component').then(m => m.ExamsComponent)
+      }
+    ]
+  },
+  {
+    path: 'monitor',
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['MONITOR'] },
+    loadComponent: () =>
+      import('./features/monitor/layout/monitor-layout.component').then(m => m.MonitorLayoutComponent),
+    children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./features/monitor/dashboard/dashboard.component').then(m => m.DashboardComponent)
+      },
+      {
+        path: 'sessions',
+        loadComponent: () =>
+          import('./features/monitor/sessions/sessions.component').then(m => m.SessionsComponent)
       }
     ]
   },

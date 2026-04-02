@@ -122,6 +122,10 @@ export class AuthService {
       this.router.navigate(['/super-admin/dashboard']);
     } else if (role === 'TENANT_ADMIN') {
       this.router.navigate(['/tenant/dashboard']);
+    } else if (role === 'STUDENT') {
+      this.router.navigate(['/student/dashboard']);
+    } else if (role === 'MONITOR') {
+      this.router.navigate(['/monitor/dashboard']);
     } else {
       this.router.navigate(['/login']);
     }
