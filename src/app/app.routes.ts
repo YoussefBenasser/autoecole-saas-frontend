@@ -62,6 +62,11 @@ export const routes: Routes = [
         path: 'tenants',
         loadComponent: () =>
           import('./features/super-admin/tenants/tenants.component').then(m => m.TenantsComponent)
+      },
+      {
+        path: 'students',
+        loadComponent: () =>
+          import('./features/super-admin/students/students.component').then(m => m.StudentsComponent)
       }
     ]
   },
@@ -127,6 +132,11 @@ export const routes: Routes = [
         path: 'exams',
         loadComponent: () =>
           import('./features/student/exams/exams.component').then(m => m.ExamsComponent)
+      },
+      {
+        path: 'theoretical-exam',
+        loadComponent: () =>
+          import('./features/student/theoretical-exam/theoretical-exam.component').then(m => m.TheoreticalExamComponent)
       }
     ]
   },

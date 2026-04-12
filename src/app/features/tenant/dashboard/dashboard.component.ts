@@ -1,13 +1,22 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { TenantService, TenantStatsApi } from '../tenant.service';
+import { environment } from '../../../../environments/environment';
 
 interface RecentStudent {
   id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
+  name?: string;
+  firstName?: string;
+  lastName?: string;
+  user?: {
+    name?: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+  };
+  email?: string;
 }
 
 interface RecentPayment {
@@ -114,11 +123,11 @@ interface RecentPayment {
           <div *ngFor="let s of recentStudents" class="tenant-card" style="display:flex; justify-content:space-between; align-items:center; padding: 1.25rem;">
             <div style="display:flex; align-items:center;">
               <div class="tenant-avatar" style="background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%); color:white;">
-                {{ s.firstName.charAt(0) }}{{ s.lastName.charAt(0) }}
+                {{ getStudentInitials(s) }}
               </div>
               <div class="tenant-info">
-                <h3 class="tenant-name">{{ s.firstName }} {{ s.lastName }}</h3>
-                <p class="tenant-email">{{ s.email }}</p>
+                <h3 class="tenant-name">{{ (s.user?.firstName || s.firstName || '') }} {{ (s.user?.lastName || s.lastName || '') }}</h3>
+                <p class="tenant-email">{{ s.user?.email || s.email || '—' }}</p>
               </div>
             </div>
           </div>
@@ -190,7 +199,7 @@ export class TenantDashboardComponent implements OnInit {
   isLoading      = true;
   errorMessage = '';
 
-  constructor(private tenantService: TenantService, private cdr: ChangeDetectorRef) {}
+  constructor(private tenantService: TenantService, private cdr: ChangeDetectorRef, private http: HttpClient) {}
 
   ngOnInit(): void {
     this.loadDashboard();
@@ -253,6 +262,15 @@ export class TenantDashboardComponent implements OnInit {
         this.cdr.detectChanges();
       }
     });
+
+    // Load recent payments
+    this.http.get<RecentPayment[]>(`${environment.apiUrl}/admin/payments/recent`).subscribe({
+      next: payments => {
+        this.recentPayments = payments.slice(0, 5);
+        this.cdr.detectChanges();
+      },
+      error: () => {}
+    });
   }
 
   private loadFallback(): void {
@@ -287,5 +305,50 @@ export class TenantDashboardComponent implements OnInit {
       },
       error: () => {}
     });
+  }
+
+  getStudentDisplayName(student: RecentStudent): string {
+    if (student.name?.trim()) {
+      return student.name.trim();
+    }
+    
+    if (student.user?.name?.trim()) {
+      return student.user.name.trim();
+    }
+    
+    const first = student.user?.firstName?.trim();
+    const last = student.user?.lastName?.trim();
+    
+    if (first || last) {
+      return `${first || ''} ${last || ''}`.trim();
+    }
+
+    return student.user?.email || student.email || 'Nom non renseigné';
+  }
+
+  getStudentInitials(student: RecentStudent): string {
+    if (student.name?.trim()) {
+      const nameParts = student.name.trim().split(' ');
+      if (nameParts.length >= 2) {
+        return `${nameParts[0].charAt(0)}${nameParts[1].charAt(0)}`.toUpperCase();
+      }
+      return student.name.charAt(0).toUpperCase();
+    }
+    
+    if (student.user?.name?.trim()) {
+      const nameParts = student.user.name.trim().split(' ');
+      if (nameParts.length >= 2) {
+        return `${nameParts[0].charAt(0)}${nameParts[1].charAt(0)}`.toUpperCase();
+      }
+      return student.user.name.charAt(0).toUpperCase();
+    }
+    
+    const first = student.user?.firstName?.trim();
+    const last = student.user?.lastName?.trim();
+    if (first || last) {
+      return `${first?.charAt(0) || ''}${last?.charAt(0) || ''}`.toUpperCase();
+    }
+
+    return (student.user?.email?.charAt(0) || student.email?.charAt(0) || 'N').toUpperCase();
   }
 }

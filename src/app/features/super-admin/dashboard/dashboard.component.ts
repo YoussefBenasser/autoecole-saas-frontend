@@ -12,6 +12,25 @@ interface Tenant {
   createdAt?: string;
 }
 
+interface Student {
+  id: string;
+  name?: string;
+  fullName?: string;
+  full_name?: string;
+  tenantName?: string;
+  user?: {
+    name?: string;
+    fullName?: string;
+    full_name?: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+  };
+  firstName?: string;
+  lastName?: string;
+  level?: string;
+}
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -97,6 +116,41 @@ interface Tenant {
 
       <!-- Content Grid -->
       <div class="content-grid">
+        <!-- Recent Students Table -->
+        <div class="recent-students">
+          <div class="section-header">
+            <h2 class="section-title">👨‍🎓 Élèves Récemment Inscrits</h2>
+            <p class="section-subtitle">Derniers élèves inscrits dans la plateforme</p>
+          </div>
+
+          <div *ngIf="isLoading" class="loading">
+            <div class="spinner"></div>
+            <p>Chargement des élèves...</p>
+          </div>
+
+          <div *ngIf="!isLoading" class="students-grid">
+            <div *ngFor="let student of recentStudents" class="student-card">
+              <div class="card-header">
+                <div class="student-avatar" [style.background]="getAvatarBg(getStudentDisplayName(student))">
+                  {{ getStudentInitials(student) }}
+                </div>
+                <div class="student-info">
+                  <h3 class="student-name">{{ (student.user?.firstName || student.firstName || '') }} {{ (student.user?.lastName || student.lastName || '') }}</h3>
+                  <p class="student-school">{{ student.tenantName || 'École non renseignée' }}</p>
+                </div>
+              </div>
+            </div>
+
+            <div *ngIf="recentStudents.length === 0" class="empty">
+              <svg class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              <h3>Aucun élève inscrit</h3>
+              <p>Les nouveaux élèves apparaîtront ici automatiquement.</p>
+            </div>
+          </div>
+        </div>
+
         <!-- Recent Tenants Table -->
         <div class="recent-tenants">
           <div class="section-header">
@@ -265,6 +319,7 @@ export class DashboardComponent implements OnInit {
   pendingTenants = 0;
   approvalRate = 0;
   recentTenants: Tenant[] = [];
+  recentStudents: Student[] = [];
   isLoading = false;
   expandedTenantId: string | null = null;
   today = new Date().toLocaleDateString('fr-FR', {
@@ -297,6 +352,45 @@ export class DashboardComponent implements OnInit {
     return colors[index];
   }
 
+  getStudentDisplayName(student: Student): string {
+    if (student.name?.trim()) {
+      return student.name.trim();
+    }
+    if (student.fullName?.trim()) {
+      return student.fullName.trim();
+    }
+    if (student.full_name?.trim()) {
+      return student.full_name.trim();
+    }
+    if (student.user?.name?.trim()) {
+      return student.user.name.trim();
+    }
+    if (student.user?.fullName?.trim()) {
+      return student.user.fullName.trim();
+    }
+    if (student.user?.full_name?.trim()) {
+      return student.user.full_name.trim();
+    }
+    const first = (student.user?.firstName || student.firstName)?.trim();
+    const last = (student.user?.lastName || student.lastName)?.trim();
+    if (first || last) {
+      return `${first || ''} ${last || ''}`.trim();
+    }
+    return 'Nom non renseigné';
+  }
+
+  getStudentInitials(student: Student): string {
+    const displayName = this.getStudentDisplayName(student);
+    if (displayName && displayName !== 'Nom non renseigné') {
+      const parts = displayName.split(' ');
+      if (parts.length >= 2) {
+        return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
+      }
+      return displayName.charAt(0).toUpperCase();
+    }
+    return 'N';
+  }
+
   ngOnInit() {
     this.loadDashboardData();
   }
@@ -319,6 +413,17 @@ export class DashboardComponent implements OnInit {
         console.error('Error loading tenants:', error);
         this.isLoading = false;
         this.cdr.detectChanges();
+      }
+    });
+
+    // Load students data
+    this.http.get<Student[]>(`${environment.apiUrl}/super-admin/students`).subscribe({
+      next: (students) => {
+        this.recentStudents = students.slice(0, 5);
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error loading students:', error);
       }
     });
   }

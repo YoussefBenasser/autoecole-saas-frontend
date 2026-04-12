@@ -19,6 +19,34 @@ import { environment } from '../../../../../environments/environment';
 
         <form [formGroup]="signupForm" (ngSubmit)="onSubmit()" class="signup-form">
           <div class="field">
+            <label for="firstName">Prénom</label>
+            <input
+              id="firstName"
+              type="text"
+              formControlName="firstName"
+              placeholder="Votre prénom"
+              [class.invalid]="signupForm.get('firstName')?.invalid && (signupForm.get('firstName')?.dirty || signupForm.get('firstName')?.touched)"
+            />
+            <div class="field-error" *ngIf="signupForm.get('firstName')?.invalid && (signupForm.get('firstName')?.dirty || signupForm.get('firstName')?.touched)">
+              <span>Le prénom est requis.</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="lastName">Nom</label>
+            <input
+              id="lastName"
+              type="text"
+              formControlName="lastName"
+              placeholder="Votre nom"
+              [class.invalid]="signupForm.get('lastName')?.invalid && (signupForm.get('lastName')?.dirty || signupForm.get('lastName')?.touched)"
+            />
+            <div class="field-error" *ngIf="signupForm.get('lastName')?.invalid && (signupForm.get('lastName')?.dirty || signupForm.get('lastName')?.touched)">
+              <span>Le nom est requis.</span>
+            </div>
+          </div>
+
+          <div class="field">
             <label for="email">Adresse e-mail</label>
             <input
               id="email"
@@ -51,6 +79,16 @@ import { environment } from '../../../../../environments/environment';
               <span *ngIf="password?.errors?.['required']">Le mot de passe est requis.</span>
               <span *ngIf="password?.errors?.['minlength']">Minimum 6 caractères.</span>
             </div>
+          </div>
+
+          <div class="field">
+            <label for="telephone">Téléphone</label>
+            <input
+              id="telephone"
+              type="tel"
+              formControlName="telephone"
+              placeholder="06 12 34 56 78"
+            />
           </div>
 
           <div class="error-message" *ngIf="errorMessage">{{ errorMessage }}</div>
@@ -263,8 +301,11 @@ export class MonitorSignupComponent {
     private router: Router
   ) {
     this.signupForm = this.fb.group({
+      firstName: ['', Validators.required],
+      lastName: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
+      password: ['', [Validators.required, Validators.minLength(6)]],
+      telephone: ['']
     });
   }
 
@@ -286,7 +327,7 @@ export class MonitorSignupComponent {
     this.isLoading = true;
     this.errorMessage = '';
 
-    this.http.post(`${environment.apiUrl}/admin/monitors`, this.signupForm.value).subscribe({
+    this.http.post(`${environment.apiUrl}/monitors/register`, this.signupForm.value).subscribe({
       next: () => {
         this.isLoading = false;
         this.router.navigate(['/login']);

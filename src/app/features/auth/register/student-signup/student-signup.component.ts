@@ -19,6 +19,34 @@ import { environment } from '../../../../../environments/environment';
 
         <form [formGroup]="signupForm" (ngSubmit)="onSubmit()" class="signup-form">
           <div class="field">
+            <label for="firstName">Prénom</label>
+            <input
+              id="firstName"
+              type="text"
+              formControlName="firstName"
+              placeholder="Votre prénom"
+              [class.invalid]="firstName?.invalid && (firstName?.dirty || firstName?.touched)"
+            />
+            <div class="field-error" *ngIf="firstName?.invalid && (firstName?.dirty || firstName?.touched)">
+              <span *ngIf="firstName?.errors?.['required']">Le prénom est requis.</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="lastName">Nom</label>
+            <input
+              id="lastName"
+              type="text"
+              formControlName="lastName"
+              placeholder="Votre nom"
+              [class.invalid]="lastName?.invalid && (lastName?.dirty || lastName?.touched)"
+            />
+            <div class="field-error" *ngIf="lastName?.invalid && (lastName?.dirty || lastName?.touched)">
+              <span *ngIf="lastName?.errors?.['required']">Le nom est requis.</span>
+            </div>
+          </div>
+
+          <div class="field">
             <label for="email">Adresse e-mail</label>
             <input
               id="email"
@@ -65,6 +93,16 @@ import { environment } from '../../../../../environments/environment';
             <div class="field-error" *ngIf="level?.invalid && (level?.dirty || level?.touched)">
               <span *ngIf="level?.errors?.['required']">Le niveau est requis.</span>
             </div>
+          </div>
+
+          <div class="field">
+            <label for="telephone">Téléphone</label>
+            <input
+              id="telephone"
+              type="tel"
+              formControlName="telephone"
+              placeholder="06 12 34 56 78"
+            />
           </div>
 
           <div class="error-message" *ngIf="errorMessage">{{ errorMessage }}</div>
@@ -285,10 +323,21 @@ export class StudentSignupComponent {
     private router: Router
   ) {
     this.signupForm = this.fb.group({
+      firstName: ['', Validators.required],
+      lastName: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
-      level: ['', Validators.required]
+      level: ['', Validators.required],
+      telephone: ['']
     });
+  }
+
+  get firstName() {
+    return this.signupForm.get('firstName');
+  }
+
+  get lastName() {
+    return this.signupForm.get('lastName');
   }
 
   get email() {
@@ -313,7 +362,7 @@ export class StudentSignupComponent {
     this.isLoading = true;
     this.errorMessage = '';
 
-    this.http.post(`${environment.apiUrl}/admin/students`, this.signupForm.value).subscribe({
+    this.http.post(`${environment.apiUrl}/students/register`, this.signupForm.value).subscribe({
       next: () => {
         this.isLoading = false;
         this.router.navigate(['/login']);

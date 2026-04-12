@@ -27,140 +27,191 @@ interface Student {
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="relative min-h-[500px] animate-fade-in">
-      <div class="flex items-center justify-between mb-6">
-        <div>
-          <h1 class="text-2xl font-bold text-white">Séances de Conduite</h1>
-          <p class="text-sm mt-1" style="color: var(--color-text-muted)">Gérez le planning des moniteurs et des élèves</p>
+    <div class="page-wrapper">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="header-left">
+          <div class="header-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <div>
+            <h1 class="page-title">Séances de Conduite</h1>
+            <p class="page-subtitle">Gérez le planning des moniteurs et des élèves</p>
+          </div>
         </div>
-        <button (click)="openModal()" class="px-4 py-2 rounded-lg font-medium text-white shadow-sm transition-transform hover:scale-105"
-                style="background: linear-gradient(135deg, #4f46e5, #06b6d4)">
-          + Ajouter une séance
+        <button (click)="openModal()" class="btn-primary">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="btn-icon">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Ajouter une séance
         </button>
       </div>
 
-      <div *ngIf="isLoading" class="flex justify-center py-20">
-        <svg class="w-8 h-8 animate-spin" style="color: var(--color-accent)" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-        </svg>
-      </div>
-
-      <div *ngIf="!isLoading" class="rounded-2xl overflow-hidden border" style="background: var(--color-surface); border-color: var(--color-border)">
-        <table class="w-full text-sm">
-          <thead>
-            <tr style="background: var(--color-surface-2)">
-              <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider" style="color: var(--color-text-muted)">Date & Heure</th>
-              <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider" style="color: var(--color-text-muted)">Moniteur</th>
-              <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider" style="color: var(--color-text-muted)">Élève(s)</th>
-              <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider" style="color: var(--color-text-muted)">Statut</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let s of sessions" class="border-t hover:bg-white/5 transition-colors" style="border-color: var(--color-border)">
-              <td class="px-5 py-4">
-                <div class="font-medium text-white">{{ s.sessionDate }}</div>
-                <div class="text-xs" style="color: var(--color-text-muted)">{{ s.startTime }} - {{ s.endTime }}</div>
-              </td>
-              <td class="px-5 py-4">
-                <div class="flex items-center gap-2">
-                  <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-inner"
-                       style="background: linear-gradient(135deg, #f59e0b, #ef4444)">
-                     {{ s.monitorName?.charAt(0) || s.monitorId.charAt(0) || 'M' }}
-                  </div>
-                  <span class="font-medium text-white">{{ s.monitorName || (s.monitorId ? ('Moniteur ' + s.monitorId.substring(0, 8)) : 'Moniteur') }}</span>
-                </div>
-              </td>
-              <td class="px-5 py-4" style="color: var(--color-text-muted)">
-                <span *ngFor="let student of s.studentNames; let last = last">
-                  {{ student || 'Élève' }}{{ !last ? ', ' : '' }}
-                </span>
-                <span *ngIf="!s.studentNames || s.studentNames.length === 0">—</span>
-              </td>
-              <td class="px-5 py-4">
-                <span class="px-2 py-1.5 rounded-full text-xs font-medium" 
-                      [ngStyle]="{'background': s.status === 'COMPLETED' ? 'rgba(34,197,94,0.15)' : 'rgba(56,189,248,0.15)', 'color': s.status === 'COMPLETED' ? '#4ade80' : '#38bdf8'}">
-                  {{ s.status === 'COMPLETED' ? 'Terminée' : 'Planifiée' }}
-                </span>
-              </td>
-            </tr>
-            <tr *ngIf="sessions.length === 0">
-              <td colspan="4" class="px-5 py-12 text-center text-sm" style="color: var(--color-text-muted)">Aucune séance planifiée pour le moment.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Create Session Modal -->
-      <div *ngIf="isModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-        <div class="w-full max-w-lg rounded-2xl shadow-xl overflow-hidden border animate-slide-up" style="background: var(--color-surface); border-color: var(--color-border)">
-          <div class="px-6 py-4 border-b flex justify-between items-center" style="border-color: var(--color-border); background: var(--color-surface-2)">
-            <h3 class="text-lg font-bold text-white">Ajouter une séance</h3>
-            <button (click)="closeModal()" class="text-gray-400 hover:text-white transition-colors">
-              <span class="text-xl">&times;</span>
-            </button>
+      <!-- KPI Cards -->
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background: rgba(79,70,229,0.15);">📅</div>
+          <div class="kpi-info">
+            <span class="kpi-value">{{ sessions.length }}</span>
+            <span class="kpi-label">Total séances</span>
           </div>
-          <form (ngSubmit)="onSubmit()" #sessionForm="ngForm" class="p-6">
-            <div class="space-y-4">
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-sm font-medium mb-1" style="color: var(--color-text-muted)">Date</label>
-                  <input type="date" name="sessionDate" [(ngModel)]="newSession.sessionDate" required
-                         class="w-full px-4 py-2 rounded-lg border text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-                         style="background: rgba(0,0,0,0.2); border-color: var(--color-border)" [min]="today" />
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                  <div>
-                    <label class="block text-sm font-medium mb-1" style="color: var(--color-text-muted)">Début</label>
-                    <input type="time" name="startTime" [(ngModel)]="newSession.startTime" required
-                           class="w-full px-4 py-2 rounded-lg border text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-                           style="background: rgba(0,0,0,0.2); border-color: var(--color-border)" />
-                  </div>
-                  <div>
-                    <label class="block text-sm font-medium mb-1" style="color: var(--color-text-muted)">Fin</label>
-                    <input type="time" name="endTime" [(ngModel)]="newSession.endTime" required
-                           class="w-full px-4 py-2 rounded-lg border text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-                           style="background: rgba(0,0,0,0.2); border-color: var(--color-border)" />
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <label class="block text-sm font-medium mb-1" style="color: var(--color-text-muted)">Moniteur</label>
-                <select name="monitorId" [(ngModel)]="newSession.monitorId" required
-                        class="w-full px-4 py-2 rounded-lg border text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-                        style="background: rgba(0,0,0,0.2); border-color: var(--color-border)">
-                  <option value="" disabled>Sélectionner un moniteur</option>
-                  <option *ngFor="let m of monitors" [value]="m.id">
-                    {{ m.user?.firstName || 'Moniteur' }} {{ m.user?.lastName || '' }}
-                  </option>
-                </select>
-              </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background: rgba(56,189,248,0.15);">🔵</div>
+          <div class="kpi-info">
+            <span class="kpi-value">{{ getCountByStatus('PLANNED') }}</span>
+            <span class="kpi-label">Planifiées</span>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background: rgba(34,197,94,0.15);">✅</div>
+          <div class="kpi-info">
+            <span class="kpi-value">{{ getCountByStatus('COMPLETED') }}</span>
+            <span class="kpi-label">Terminées</span>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background: rgba(245,158,11,0.15);">👨‍🏫</div>
+          <div class="kpi-info">
+            <span class="kpi-value">{{ monitors.length }}</span>
+            <span class="kpi-label">Moniteurs</span>
+          </div>
+        </div>
+      </div>
 
-              <div>
-                <label class="block text-sm font-medium mb-1" style="color: var(--color-text-muted)">Élève</label>
-                <select name="studentId" [(ngModel)]="newSession.studentId" required
-                        class="w-full px-4 py-2 rounded-lg border text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-                        style="background: rgba(0,0,0,0.2); border-color: var(--color-border)">
-                  <option value="" disabled>Sélectionner un élève</option>
-                  <option *ngFor="let s of students" [value]="s.id">
-                    {{ s.user?.firstName || 'Élève' }} {{ s.user?.lastName || 'Nouveau' }}
-                  </option>
-                </select>
+      <!-- Filter Tabs -->
+      <div class="filter-tabs">
+        <button class="tab-btn" [class.active]="currentFilter === 'all'" (click)="currentFilter = 'all'">
+          Toutes
+          <span class="tab-count">{{ sessions.length }}</span>
+        </button>
+        <button class="tab-btn" [class.active]="currentFilter === 'PLANNED'" (click)="currentFilter = 'PLANNED'">
+          Planifiées
+          <span class="tab-count">{{ getCountByStatus('PLANNED') }}</span>
+        </button>
+        <button class="tab-btn" [class.active]="currentFilter === 'COMPLETED'" (click)="currentFilter = 'COMPLETED'">
+          Terminées
+          <span class="tab-count">{{ getCountByStatus('COMPLETED') }}</span>
+        </button>
+      </div>
+
+      <!-- Loading -->
+      <div *ngIf="isLoading" class="loading-state">
+        <div class="spinner"></div>
+        <p>Chargement des séances...</p>
+      </div>
+
+      <!-- Sessions Timeline -->
+      <div *ngIf="!isLoading && filteredSessions.length > 0" class="sessions-list">
+        <div *ngFor="let s of filteredSessions; let i = index" class="session-card" [style.animation-delay]="(i * 0.05) + 's'">
+          <div class="session-time-col">
+            <div class="time-badge">
+              <span class="time-main">{{ s.startTime?.substring(0,5) || '—' }}</span>
+              <span class="time-sep">→</span>
+              <span class="time-main">{{ s.endTime?.substring(0,5) || '—' }}</span>
+            </div>
+            <div class="date-badge">{{ s.sessionDate }}</div>
+          </div>
+          <div class="session-connector">
+            <div class="connector-dot" [class.completed]="s.status === 'COMPLETED'"></div>
+            <div class="connector-line"></div>
+          </div>
+          <div class="session-content">
+            <div class="session-row-top">
+              <div class="session-monitor">
+                <div class="avatar-sm avatar-amber">
+                  {{ s.monitorName?.charAt(0) || s.monitorId?.charAt(0) || 'M' }}
+                </div>
+                <div>
+                  <span class="label-small">Moniteur</span>
+                  <span class="name-text">{{ s.monitorName || 'Moniteur ' + (s.monitorId?.substring(0, 6) || '') }}</span>
+                </div>
+              </div>
+              <span class="status-badge" [class.status-completed]="s.status === 'COMPLETED'" [class.status-planned]="s.status !== 'COMPLETED'">
+                {{ s.status === 'COMPLETED' ? '✓ Terminée' : '◉ Planifiée' }}
+              </span>
+            </div>
+            <div class="session-students">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="students-icon">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+              </svg>
+              <span *ngFor="let student of s.studentNames; let last = last" class="student-name">
+                {{ student || 'Élève' }}{{ !last ? ', ' : '' }}
+              </span>
+              <span *ngIf="!s.studentNames || s.studentNames.length === 0" class="student-name">Aucun élève assigné</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty -->
+      <div *ngIf="!isLoading && filteredSessions.length === 0" class="empty-container">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" class="empty-icon">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <p>Aucune séance trouvée.</p>
+      </div>
+
+      <!-- Modal -->
+      <div *ngIf="isModalOpen" class="modal-overlay" (click)="closeModal()">
+        <div class="modal-container" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <div class="modal-header-left">
+              <div class="modal-icon">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              </div>
+              <h3>Ajouter une séance</h3>
+            </div>
+            <button (click)="closeModal()" class="modal-close">&times;</button>
+          </div>
+          <form (ngSubmit)="onSubmit()" #sessionForm="ngForm" class="modal-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Date</label>
+                <input type="date" name="sessionDate" [(ngModel)]="newSession.sessionDate" required
+                       class="form-input" [min]="today" />
+              </div>
+              <div class="form-group-row">
+                <div class="form-group">
+                  <label>Début</label>
+                  <input type="time" name="startTime" [(ngModel)]="newSession.startTime" required class="form-input" />
+                </div>
+                <div class="form-group">
+                  <label>Fin</label>
+                  <input type="time" name="endTime" [(ngModel)]="newSession.endTime" required class="form-input" />
+                </div>
               </div>
             </div>
-            
-            <div class="mt-8 flex gap-3 justify-end">
-              <button type="button" (click)="closeModal()" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors border hover:bg-white/5" style="border-color: var(--color-border); color: var(--color-text-muted)">
-                Annuler
-              </button>
-              <button type="submit" [disabled]="!sessionForm.form.valid || isSubmitting"
-                      class="px-5 py-2 rounded-lg text-sm font-medium text-white transition-all disabled:opacity-50"
-                      style="background: linear-gradient(135deg, #4f46e5, #06b6d4)">
+            <div class="form-group">
+              <label>Moniteur</label>
+              <select name="monitorId" [(ngModel)]="newSession.monitorId" required class="form-input">
+                <option value="" disabled>Sélectionner un moniteur</option>
+                <option *ngFor="let m of monitors" [value]="m.id">
+                  {{ m.user?.firstName || 'Moniteur' }} {{ m.user?.lastName || '' }}
+                </option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Élève</label>
+              <select name="studentId" [(ngModel)]="newSession.studentId" required class="form-input">
+                <option value="" disabled>Sélectionner un élève</option>
+                <option *ngFor="let s of students" [value]="s.id">
+                  {{ s.user?.firstName || 'Élève' }} {{ s.user?.lastName || 'Nouveau' }}
+                </option>
+              </select>
+            </div>
+            <div class="modal-actions">
+              <button type="button" (click)="closeModal()" class="btn-ghost">Annuler</button>
+              <button type="submit" [disabled]="!sessionForm.form.valid || isSubmitting" class="btn-primary">
                 <span *ngIf="!isSubmitting">Créer la séance</span>
-                <span *ngIf="isSubmitting" class="flex items-center gap-2">
-                  <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
-                  ...
+                <span *ngIf="isSubmitting" class="btn-loading">
+                  <div class="spinner-sm"></div>
+                  Création...
                 </span>
               </button>
             </div>
@@ -168,14 +219,582 @@ interface Student {
         </div>
       </div>
     </div>
-  `
+  `,
+  styles: [`
+    :host { display: block; }
+
+    .page-wrapper {
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-12px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .header-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #4f46e5, #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+    }
+
+    .header-icon svg { width: 26px; height: 26px; color: white; }
+
+    .page-title {
+      font-size: 1.75rem;
+      font-weight: 800;
+      margin: 0;
+      background: linear-gradient(135deg, #ffffff 0%, #c4b5fd 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .page-subtitle {
+      margin: 0.25rem 0 0 0;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.9rem;
+    }
+
+    /* KPI Row */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .kpi-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+      border-color: rgba(255, 255, 255, 0.18);
+    }
+
+    .kpi-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+
+    .kpi-info { display: flex; flex-direction: column; }
+    .kpi-value { font-size: 1.5rem; font-weight: 800; color: #ffffff; }
+    .kpi-label { font-size: 0.8rem; color: rgba(255, 255, 255, 0.55); font-weight: 500; }
+
+    /* Filter Tabs */
+    .filter-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 14px;
+      padding: 0.35rem;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      width: fit-content;
+    }
+
+    .tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.6rem 1.25rem;
+      border: none;
+      border-radius: 11px;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.55);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      font-family: inherit;
+    }
+
+    .tab-btn:hover { color: rgba(255, 255, 255, 0.8); }
+
+    .tab-btn.active {
+      background: rgba(79, 70, 229, 0.2);
+      color: #a78bfa;
+      box-shadow: 0 2px 8px rgba(79, 70, 229, 0.15);
+    }
+
+    .tab-count {
+      font-size: 0.7rem;
+      padding: 0.1rem 0.5rem;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.6);
+      font-weight: 700;
+    }
+
+    .tab-btn.active .tab-count {
+      background: rgba(79, 70, 229, 0.3);
+      color: #c4b5fd;
+    }
+
+    /* Loading */
+    .loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      padding: 4rem 0;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-top-color: #4f46e5;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .spinner-sm {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Sessions Timeline List */
+    .sessions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .session-card {
+      display: grid;
+      grid-template-columns: 140px 40px 1fr;
+      gap: 0;
+      animation: slideIn 0.4s ease-out both;
+    }
+
+    .session-time-col {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      padding: 1.25rem 0;
+      gap: 0.35rem;
+    }
+
+    .time-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .time-main {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: white;
+    }
+
+    .time-sep {
+      color: rgba(255, 255, 255, 0.3);
+      font-size: 0.8rem;
+    }
+
+    .date-badge {
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.45);
+      font-weight: 500;
+    }
+
+    /* Connector */
+    .session-connector {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 1.5rem;
+    }
+
+    .connector-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(79, 70, 229, 0.4);
+      border: 2px solid rgba(79, 70, 229, 0.8);
+      flex-shrink: 0;
+      z-index: 1;
+    }
+
+    .connector-dot.completed {
+      background: rgba(34, 197, 94, 0.4);
+      border-color: #22c55e;
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.3);
+    }
+
+    .connector-line {
+      width: 2px;
+      flex: 1;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Session Content */
+    .session-content {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 1.25rem 1.5rem;
+      margin: 0.5rem 0 0.5rem 0.75rem;
+      transition: all 0.3s ease;
+    }
+
+    .session-content:hover {
+      background: rgba(255, 255, 255, 0.07);
+      border-color: rgba(79, 70, 229, 0.2);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+
+    .session-row-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+
+    .session-monitor {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .avatar-sm {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .avatar-amber {
+      background: linear-gradient(135deg, #f59e0b, #ef4444);
+      box-shadow: 0 4px 10px rgba(245, 158, 11, 0.25);
+    }
+
+    .label-small {
+      display: block;
+      font-size: 0.7rem;
+      color: rgba(255, 255, 255, 0.4);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .name-text {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: white;
+    }
+
+    /* Status Badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.9rem;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    .status-completed {
+      background: rgba(34, 197, 94, 0.15);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+
+    .status-planned {
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+
+    /* Students row */
+    .session-students {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding-top: 0.65rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .students-icon {
+      width: 16px;
+      height: 16px;
+      color: rgba(255, 255, 255, 0.3);
+      flex-shrink: 0;
+    }
+
+    .student-name {
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    /* Empty */
+    .empty-container {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .empty-icon {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 1rem;
+      color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Buttons */
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background: linear-gradient(135deg, #4f46e5, #8b5cf6);
+      border: none;
+      border-radius: 14px;
+      color: white;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 6px 20px rgba(79, 70, 229, 0.3);
+      font-family: inherit;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 10px 30px rgba(79, 70, 229, 0.4);
+    }
+
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-icon { width: 18px; height: 18px; }
+
+    .btn-ghost {
+      padding: 0.75rem 1.25rem;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 14px;
+      color: rgba(255, 255, 255, 0.7);
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .btn-ghost:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .btn-loading {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .modal-container {
+      width: 100%;
+      max-width: 520px;
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.98), rgba(15, 23, 42, 0.98));
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+      animation: modalIn 0.3s ease-out;
+    }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.95) translateY(20px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.5rem 1.75rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .modal-header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .modal-header h3 { margin: 0; font-size: 1.15rem; font-weight: 700; color: white; }
+
+    .modal-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #4f46e5, #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-icon svg { width: 20px; height: 20px; color: white; }
+
+    .modal-close {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 1.3rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .modal-close:hover { background: rgba(255, 255, 255, 0.12); color: white; }
+
+    .modal-body { padding: 1.75rem; }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .form-group-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .form-group { margin-bottom: 1.25rem; }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.65);
+      margin-bottom: 0.5rem;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      color: white;
+      font-size: 0.9rem;
+      outline: none;
+      transition: all 0.3s ease;
+      font-family: inherit;
+    }
+
+    .form-input::placeholder { color: rgba(255, 255, 255, 0.3); }
+
+    .form-input:focus {
+      border-color: rgba(79, 70, 229, 0.5);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+    }
+
+    .form-input option { background: #1e293b; color: white; }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+      margin-top: 1.75rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    @media (max-width: 768px) {
+      .page-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+      .kpi-row { grid-template-columns: repeat(2, 1fr); }
+      .session-card { grid-template-columns: 1fr; }
+      .session-time-col { align-items: flex-start; flex-direction: row; gap: 0.75rem; padding: 0.75rem 0 0; }
+      .session-connector { display: none; }
+      .session-content { margin-left: 0; }
+      .form-row { grid-template-columns: 1fr; }
+    }
+  `]
 })
 export class SessionsComponent implements OnInit {
   sessions: Session[] = [];
   students: Student[] = [];
   monitors: Monitor[] = [];
   isLoading = true;
-  
+  currentFilter = 'all';
+
   isModalOpen = false;
   isSubmitting = false;
   today = new Date().toISOString().split('T')[0];
@@ -192,6 +811,15 @@ export class SessionsComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadData();
+  }
+
+  get filteredSessions(): Session[] {
+    if (this.currentFilter === 'all') return this.sessions;
+    return this.sessions.filter(s => s.status === this.currentFilter);
+  }
+
+  getCountByStatus(status: string): number {
+    return this.sessions.filter(s => s.status === status).length;
   }
 
   loadData() {
@@ -250,11 +878,10 @@ export class SessionsComponent implements OnInit {
     if (!this.newSession.monitorId || !this.newSession.studentId || !this.newSession.sessionDate) return;
     this.isSubmitting = true;
 
-    // Map to CreateSessionRequest DTO
     const payload = {
       monitorId: this.newSession.monitorId,
       sessionDate: this.newSession.sessionDate,
-      startTime: this.newSession.startTime + ':00', // required format HH:mm:ss in java LocalTime usually handles HH:mm though
+      startTime: this.newSession.startTime + ':00',
       endTime: this.newSession.endTime + ':00',
       studentIds: [this.newSession.studentId]
     };
@@ -264,7 +891,7 @@ export class SessionsComponent implements OnInit {
     } else if (payload.startTime.length > 8) {
         payload.startTime = payload.startTime.substring(0,8);
     }
-    
+
     if (payload.endTime.length === 5) {
       payload.endTime += ':00';
     } else if (payload.endTime.length > 8) {
@@ -275,7 +902,7 @@ export class SessionsComponent implements OnInit {
       next: () => {
         this.isSubmitting = false;
         this.closeModal();
-        this.loadData(); // refresh
+        this.loadData();
       },
       error: (err) => {
         console.error('Error creating session', err);

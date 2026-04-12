@@ -35,6 +35,7 @@ interface Tenant {
                 </svg>
                 <input
                   type="text"
+                  name="searchQuery"
                   placeholder="Rechercher une école, un email..."
                   [(ngModel)]="searchQuery"
                   (input)="onSearchInput()"

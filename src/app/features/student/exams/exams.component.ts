@@ -1,13 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { RouterModule } from '@angular/router';
 import { environment } from '../../../../environments/environment';
 import { ExamResponse as Exam } from '../../../core/models/exam.model';
 
 @Component({
   selector: 'app-student-exams',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   template: `
     <div class="relative min-h-[500px]">
       <div class="flex items-center justify-between mb-6">
@@ -22,6 +23,28 @@ import { ExamResponse as Exam } from '../../../core/models/exam.model';
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
         </svg>
+      </div>
+
+      <!-- Official Exam Highlight -->
+      <div *ngIf="nextOfficialExam" class="mb-6 p-5 rounded-2xl border flex items-center gap-4" 
+           style="background: linear-gradient(145deg, rgba(234,179,8,0.1), rgba(234,179,8,0.02)); border-color: rgba(234,179,8,0.3)">
+        <div class="w-12 h-12 rounded-full flex items-center justify-center text-2xl shrink-0" style="background: rgba(234,179,8,0.2)">
+          ⚠️
+        </div>
+        <div>
+          <h2 class="text-lg font-bold" style="color: #facc15">Examen Officiel Planifié</h2>
+          <p class="text-sm text-white mt-1">
+            Vous êtes convoqué pour un examen <strong>{{ nextOfficialExam.type.toLowerCase() === 'driving' ? 'Pratique' : 'Théorique (Code)' }}</strong> 
+            le <span class="font-bold">{{ nextOfficialExam.date | date:'dd/MM/yyyy' }}</span>.
+            Préparez-vous bien !
+          </p>
+        </div>
+        <div class="ml-auto" *ngIf="nextOfficialExam.type.toLowerCase() !== 'driving'">
+           <a routerLink="/student/theoretical-exam"
+              class="px-4 py-2 rounded-lg font-bold text-sm bg-yellow-500 text-black hover:bg-yellow-400 transition-colors">
+              📝 Passer l'examen
+           </a>
+        </div>
       </div>
 
       <div *ngIf="!isLoading && exams.length > 0" class="rounded-2xl overflow-hidden border" style="background: var(--color-surface); border-color: var(--color-border)">
@@ -71,6 +94,7 @@ import { ExamResponse as Exam } from '../../../core/models/exam.model';
 export class ExamsComponent implements OnInit {
   exams: Exam[] = [];
   isLoading = true;
+  nextOfficialExam: Exam | null = null;
 
   constructor(private http: HttpClient) {}
 
@@ -91,6 +115,8 @@ export class ExamsComponent implements OnInit {
     this.http.get<Exam[]>(`${environment.apiUrl}/exams/student/${studentId}`).subscribe({
       next: (data) => {
         this.exams = data.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        // Find the next scheduled exam
+        this.nextOfficialExam = this.exams.find(e => e.status === 'SCHEDULED' && new Date(e.date) >= new Date()) || null;
         this.isLoading = false;
       },
       error: () => this.isLoading = false

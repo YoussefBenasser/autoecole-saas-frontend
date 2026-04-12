@@ -5,7 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 
 @Component({
-  selector: 'app-student-dashboard',
+  selector: 'app-dashboard',
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
@@ -31,7 +31,7 @@ import { environment } from '../../../../environments/environment';
               <h3 class="font-semibold text-white">Prochaine séance</h3>
             </div>
             <div *ngIf="nextSession">
-              <p class="text-xl font-bold text-white mb-1">{{ nextSession.sessionDate }}</p>
+              <p class="text-xl font-bold text-white mb-1">{{ nextSession.sessionDate | date:'dd/MM/yyyy' }}</p>
               <p class="text-sm" style="color: var(--color-text-muted)">{{ nextSession.startTime }} - {{ nextSession.endTime }}</p>
             </div>
             <p *ngIf="!nextSession" class="text-sm italic" style="color: var(--color-text-muted)">Aucune séance planifiée.</p>
