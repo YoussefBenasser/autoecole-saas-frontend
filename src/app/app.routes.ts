@@ -18,6 +18,7 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/auth/login/login.component').then(m => m.LoginComponent)
   },
+
   {
     path: 'register',
     loadComponent: () =>
@@ -123,6 +124,12 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/student/dashboard/dashboard.component').then(m => m.DashboardComponent)
       },
+    {
+      path: 'choose-school',
+      loadComponent: () =>
+        import('./features/student/school-selection/school-selection.component')
+        .then(m => m.SchoolSelectionComponent)
+    },
       {
         path: 'sessions',
         loadComponent: () =>

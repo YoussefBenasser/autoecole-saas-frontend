@@ -11,12 +11,13 @@ export class AuthService {
   private readonly TOKEN_KEY = 'auth_token';
   private readonly ROLE_KEY = 'auth_role';
   private readonly EMAIL_KEY = 'auth_email';
+  private readonly TENANT_KEY = 'auth_tenant';
 
   constructor(private http: HttpClient, private router: Router) { }
 
   /**
    * POST /api/auth/login — backend returns a raw JWT string (not JSON).
-   * We decode the payload to extract role and email.
+   * We decode the payload to extract role, email, and tenantId.
    */
   login(request: LoginRequest): Observable<string> {
     return this.http.post(`${environment.apiUrl}/auth/login`, request, { responseType: 'text' }).pipe(
@@ -46,8 +47,19 @@ export class AuthService {
 
           const role = this.normalizeRole(rawRole);
           const email = payload.sub ?? payload.email ?? '';
+
+          // Store tenantId from JWT (null if student has no tenant yet)
+          const tenantId = payload.tenantId ?? payload.tenant_id ?? null;
+
           localStorage.setItem(this.ROLE_KEY, role);
           localStorage.setItem(this.EMAIL_KEY, email);
+
+          if (tenantId) {
+            localStorage.setItem(this.TENANT_KEY, tenantId);
+          } else {
+            localStorage.removeItem(this.TENANT_KEY);
+          }
+
         } catch (e) {
           console.error('Failed to decode JWT payload', e);
         }
@@ -59,6 +71,7 @@ export class AuthService {
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.ROLE_KEY);
     localStorage.removeItem(this.EMAIL_KEY);
+    localStorage.removeItem(this.TENANT_KEY);
     this.router.navigate(['/login']);
   }
 
@@ -74,6 +87,14 @@ export class AuthService {
     return localStorage.getItem(this.ROLE_KEY) as UserRole | null;
   }
 
+  getTenantId(): string | null {
+    return localStorage.getItem(this.TENANT_KEY);
+  }
+
+  hasTenant(): boolean {
+    return !!localStorage.getItem(this.TENANT_KEY);
+  }
+
   private normalizeRole(rawRole: unknown): string {
     if (!rawRole) {
       return '';
@@ -87,6 +108,11 @@ export class AuthService {
     // Map any common tenant role variants to TENANT_ADMIN
     if (role === 'TENANT' || role === 'TENANT_ADMIN' || role === 'ADMIN_TENANT' || role === 'ADMIN') {
       return 'TENANT_ADMIN';
+    }
+
+    // Map ELEVE to STUDENT so it matches route guards and dashboard redirect
+    if (role === 'ELEVE') {
+      return 'STUDENT';
     }
 
     if (role === 'SUPER_ADMIN' || role === 'MONITOR' || role === 'STUDENT') {
@@ -117,17 +143,23 @@ export class AuthService {
   }
 
   redirectToDashboard(): void {
-    const role = this.getRole();
-    if (role === 'SUPER_ADMIN') {
-      this.router.navigate(['/super-admin/dashboard']);
-    } else if (role === 'TENANT_ADMIN') {
-      this.router.navigate(['/tenant/dashboard']);
-    } else if (role === 'STUDENT') {
-      this.router.navigate(['/student/dashboard']);
-    } else if (role === 'MONITOR') {
-      this.router.navigate(['/monitor/dashboard']);
-    } else {
-      this.router.navigate(['/login']);
+      const role = this.getRole();
+      if (role === 'SUPER_ADMIN') {
+        this.router.navigate(['/super-admin/dashboard']);
+      } else if (role === 'TENANT_ADMIN') {
+        this.router.navigate(['/tenant/dashboard']);
+      } else if (role === 'STUDENT') {
+        // If student has no tenant yet, send them to choose a school
+        const hasTenant = this.getTenantId() !== null;
+        if (hasTenant) {
+          this.router.navigate(['/student/dashboard']);
+        } else {
+          this.router.navigate(['/student/choose-school']);
+        }
+      } else if (role === 'MONITOR') {
+        this.router.navigate(['/monitor/dashboard']);
+      } else {
+        this.router.navigate(['/login']);
+      }
     }
   }
-}
