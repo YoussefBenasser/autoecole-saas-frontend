@@ -772,15 +772,6 @@ export class StudentsComponent implements OnInit {
     if (student.full_name?.trim()) {
       return student.full_name.trim();
     }
-    if (student.user?.name?.trim()) {
-      return student.user.name.trim();
-    }
-    if (student.user?.fullName?.trim()) {
-      return student.user.fullName.trim();
-    }
-    if (student.user?.full_name?.trim()) {
-      return student.user.full_name.trim();
-    }
     const first = (student.prenom || student.firstName || student.user?.prenom || student.user?.firstName)?.trim();
     const last = (student.nom || student.lastName || student.user?.nom || student.user?.lastName)?.trim();
 
@@ -833,9 +824,9 @@ export class StudentsComponent implements OnInit {
             name: student.name,
             fullName: student.fullName,
             full_name: student.full_name,
-            userName: student.user?.name,
-            userFullName: student.user?.fullName,
-            userFull_name: student.user?.full_name,
+            userName: (student.user as any)?.name,
+            userFullName: (student.user as any)?.fullName,
+            userFull_name: (student.user as any)?.full_name,
             userExists: !!student.user,
             firstName: student.user?.firstName,
             lastName: student.user?.lastName,
