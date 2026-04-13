@@ -18,6 +18,9 @@ interface Student {
   telephone?: string;
   // Also handle nested user object in case structure changes
   user?: {
+    name?: string;
+    fullName?: string;
+    full_name?: string;
     nom?: string;
     prenom?: string;
     firstName?: string;

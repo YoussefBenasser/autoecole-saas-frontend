@@ -332,25 +332,11 @@ export class StudentSignupComponent {
     });
   }
 
-  get firstName() {
-    return this.signupForm.get('firstName');
-  }
-
-  get lastName() {
-    return this.signupForm.get('lastName');
-  }
-
-  get email() {
-    return this.signupForm.get('email');
-  }
-
-  get password() {
-    return this.signupForm.get('password');
-  }
-
-  get level() {
-    return this.signupForm.get('level');
-  }
+  get firstName() { return this.signupForm.get('firstName'); }
+  get lastName() { return this.signupForm.get('lastName'); }
+  get email() { return this.signupForm.get('email'); }
+  get password() { return this.signupForm.get('password'); }
+  get level() { return this.signupForm.get('level'); }
 
   togglePassword(): void {
     this.showPassword = !this.showPassword;
@@ -362,7 +348,15 @@ export class StudentSignupComponent {
     this.isLoading = true;
     this.errorMessage = '';
 
-    this.http.post(`${environment.apiUrl}/students/register`, this.signupForm.value).subscribe({
+    // Map Angular form fields to backend expected fields
+    const payload = {
+      email: this.signupForm.value.email,
+      password: this.signupForm.value.password,
+      nom: this.signupForm.value.lastName,       // backend expects 'nom'
+      prenom: this.signupForm.value.firstName    // backend expects 'prenom'
+    };
+
+    this.http.post(`${environment.apiUrl}/auth/student/register`, payload, { responseType: 'text' }).subscribe({
       next: () => {
         this.isLoading = false;
         this.router.navigate(['/login']);
