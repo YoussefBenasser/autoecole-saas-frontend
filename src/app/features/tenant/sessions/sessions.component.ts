@@ -8,17 +8,34 @@ import { ExtendedSessionResponse as Session } from '../../../core/models/session
 
 interface Monitor {
   id: string;
+  prenom?: string;
+  nom?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
   user?: {
     firstName: string;
     lastName: string;
+    prenom?: string;
+    nom?: string;
   };
 }
 
 interface Student {
   id: string;
+  name?: string;
+  fullName?: string;
+  full_name?: string;
+  nom?: string;
+  prenom?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
   user?: {
-    firstName: string;
-    lastName: string;
+    firstName?: string;
+    lastName?: string;
+    prenom?: string;
+    nom?: string;
   };
 }
 
@@ -192,22 +209,24 @@ interface Student {
               <select name="monitorId" [(ngModel)]="newSession.monitorId" required class="form-input">
                 <option value="" disabled>Sélectionner un moniteur</option>
                 <option *ngFor="let m of monitors" [value]="m.id">
-                  {{ m.user?.firstName || 'Moniteur' }} {{ m.user?.lastName || '' }}
+                  {{ getMonitorDisplayName(m) }}
                 </option>
               </select>
             </div>
             <div class="form-group">
-              <label>Élève</label>
-              <select name="studentId" [(ngModel)]="newSession.studentId" required class="form-input">
-                <option value="" disabled>Sélectionner un élève</option>
-                <option *ngFor="let s of students" [value]="s.id">
-                  {{ s.user?.firstName || 'Élève' }} {{ s.user?.lastName || 'Nouveau' }}
-                </option>
-              </select>
+              <label>Élèves</label>
+              <div class="student-checklist">
+                <div *ngIf="students.length === 0" class="no-students-msg">Aucun élève disponible</div>
+                <label *ngFor="let s of students" class="student-check-item" [class.checked]="isStudentSelected(s.id)">
+                  <input type="checkbox" [checked]="isStudentSelected(s.id)" (change)="toggleStudent(s.id)" />
+                  <span class="check-avatar">{{ getStudentDisplayName(s).charAt(0) }}</span>
+                  <span class="check-name">{{ getStudentDisplayName(s) }}</span>
+                </label>
+              </div>
             </div>
             <div class="modal-actions">
               <button type="button" (click)="closeModal()" class="btn-ghost">Annuler</button>
-              <button type="submit" [disabled]="!sessionForm.form.valid || isSubmitting" class="btn-primary">
+              <button type="submit" [disabled]="!sessionForm.form.valid || isSubmitting || selectedStudentIds.length === 0" class="btn-primary">
                 <span *ngIf="!isSubmitting">Créer la séance</span>
                 <span *ngIf="isSubmitting" class="btn-loading">
                   <div class="spinner-sm"></div>
@@ -738,6 +757,91 @@ interface Student {
 
     .form-group { margin-bottom: 1.25rem; }
 
+    .student-checklist {
+      max-height: 200px;
+      overflow-y: auto;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .student-checklist::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .student-checklist::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .student-checklist::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 3px;
+    }
+
+    .no-students-msg {
+      padding: 1rem;
+      text-align: center;
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 0.85rem;
+    }
+
+    .student-check-item {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.55rem 0.75rem;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+    }
+
+    .student-check-item:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .student-check-item.checked {
+      background: rgba(79, 70, 229, 0.12);
+      border-color: rgba(79, 70, 229, 0.3);
+    }
+
+    .student-check-item input[type="checkbox"] {
+      display: none;
+    }
+
+    .check-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .student-check-item.checked .check-avatar {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+    }
+
+    .check-name {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .student-check-item.checked .check-name {
+      color: white;
+    }
+
     .form-group label {
       display: block;
       font-size: 0.85rem;
@@ -799,9 +903,10 @@ export class SessionsComponent implements OnInit {
   isSubmitting = false;
   today = new Date().toISOString().split('T')[0];
 
+  selectedStudentIds: string[] = [];
+
   newSession = {
     monitorId: '',
-    studentId: '',
     sessionDate: '',
     startTime: '08:00',
     endTime: '10:00'
@@ -847,14 +952,15 @@ export class SessionsComponent implements OnInit {
 
   private enrichSession(session: Session): Session {
     const monitor = this.monitors.find((m) => m.id === session.monitorId);
+    const monitorName = monitor ? this.getMonitorDisplayName(monitor) : undefined;
     const studentNames = (session.studentIds || []).map((id) => {
       const student = this.students.find((s) => s.id === id);
-      return student ? `${student.user?.firstName || ''} ${student.user?.lastName || ''}`.trim() : id.substring(0, 8);
+      return student ? this.getStudentDisplayName(student) : id.substring(0, 8);
     });
 
     return {
       ...session,
-      monitorName: monitor ? `${monitor.user?.firstName || ''} ${monitor.user?.lastName || ''}`.trim() : undefined,
+      monitorName: monitorName,
       studentNames: studentNames.filter(Boolean)
     };
   }
@@ -862,52 +968,158 @@ export class SessionsComponent implements OnInit {
   openModal() {
     this.newSession = {
       monitorId: '',
-      studentId: '',
       sessionDate: this.today,
       startTime: '08:00',
       endTime: '10:00'
     };
+    this.selectedStudentIds = [];
     this.isModalOpen = true;
+  }
+
+  isStudentSelected(studentId: string): boolean {
+    return this.selectedStudentIds.includes(studentId);
+  }
+
+  toggleStudent(studentId: string): void {
+    const idx = this.selectedStudentIds.indexOf(studentId);
+    if (idx >= 0) {
+      this.selectedStudentIds.splice(idx, 1);
+    } else {
+      this.selectedStudentIds.push(studentId);
+    }
   }
 
   closeModal() {
     this.isModalOpen = false;
   }
 
+  private formatTimeForApi(time: string): string {
+    if (!time) return '00:00:00';
+    const parts = time.split(':');
+    if (parts.length === 2) return `${parts[0]}:${parts[1]}:00`;
+    if (parts.length >= 3) return `${parts[0]}:${parts[1]}:${parts[2].substring(0, 2)}`;
+    return time;
+  }
+
   onSubmit() {
-    if (!this.newSession.monitorId || !this.newSession.studentId || !this.newSession.sessionDate) return;
+    if (!this.newSession.monitorId || this.selectedStudentIds.length === 0 || !this.newSession.sessionDate) return;
     this.isSubmitting = true;
 
     const payload = {
       monitorId: this.newSession.monitorId,
       sessionDate: this.newSession.sessionDate,
-      startTime: this.newSession.startTime + ':00',
-      endTime: this.newSession.endTime + ':00',
-      studentIds: [this.newSession.studentId]
+      startTime: this.formatTimeForApi(this.newSession.startTime),
+      endTime: this.formatTimeForApi(this.newSession.endTime),
+      studentIds: this.selectedStudentIds
     };
 
-    if (payload.startTime.length === 5) {
-      payload.startTime += ':00';
-    } else if (payload.startTime.length > 8) {
-        payload.startTime = payload.startTime.substring(0,8);
-    }
+    this.http.post<any>(`${environment.apiUrl}/sessions`, payload).subscribe({
+      next: (createdSession) => {
+        // After session creation, verify students are assigned.
+        // If the backend response shows missing students, assign them individually.
+        const createdId = createdSession?.id;
+        const returnedStudentIds: string[] = createdSession?.studentIds || [];
+        const missingStudents = this.selectedStudentIds.filter(
+          (sid) => !returnedStudentIds.includes(sid)
+        );
 
-    if (payload.endTime.length === 5) {
-      payload.endTime += ':00';
-    } else if (payload.endTime.length > 8) {
-        payload.endTime = payload.endTime.substring(0,8);
-    }
-
-    this.http.post(`${environment.apiUrl}/sessions`, payload).subscribe({
-      next: () => {
-        this.isSubmitting = false;
-        this.closeModal();
-        this.loadData();
+        if (createdId && missingStudents.length > 0) {
+          // Call POST /sessions/{id}/students/{studentId} for each missing student
+          const assignCalls = missingStudents.map((studentId) =>
+            this.http.post(`${environment.apiUrl}/sessions/${createdId}/students/${studentId}`, {})
+          );
+          forkJoin(assignCalls).subscribe({
+            next: () => {
+              this.isSubmitting = false;
+              this.closeModal();
+              this.loadData();
+            },
+            error: (err) => {
+              console.error('Error assigning students to session', err);
+              this.isSubmitting = false;
+              this.closeModal();
+              this.loadData();
+            }
+          });
+        } else {
+          this.isSubmitting = false;
+          this.closeModal();
+          this.loadData();
+        }
       },
       error: (err) => {
         console.error('Error creating session', err);
         this.isSubmitting = false;
       }
     });
+  }
+
+  getMonitorDisplayName(monitor: Monitor): string {
+    if (!monitor) {
+      return 'Moniteur inconnu';
+    }
+
+    // Try root level properties first (English)
+    if (monitor.firstName || monitor.lastName) {
+      const fullName = `${monitor.firstName || ''} ${monitor.lastName || ''}`.trim();
+      if (fullName) return fullName;
+    }
+
+    // Try root level properties (French)
+    if (monitor.prenom || monitor.nom) {
+      const fullName = `${monitor.prenom || ''} ${monitor.nom || ''}`.trim();
+      if (fullName) return fullName;
+    }
+
+    // Try nested user object
+    if (monitor.user) {
+      if (monitor.user.firstName || monitor.user.lastName) {
+        const fullName = `${monitor.user.firstName || ''} ${monitor.user.lastName || ''}`.trim();
+        if (fullName) return fullName;
+      }
+      if (monitor.user.prenom || monitor.user.nom) {
+        const fullName = `${monitor.user.prenom || ''} ${monitor.user.nom || ''}`.trim();
+        if (fullName) return fullName;
+      }
+    }
+
+    return 'Moniteur sans nom';
+  }
+
+  getStudentDisplayName(student: Student): string {
+    if (!student) {
+      return 'Élève inconnu';
+    }
+
+    // Try root level fullName/full_name properties
+    if (student.fullName) return student.fullName;
+    if (student.full_name) return student.full_name;
+    if (student.name) return student.name;
+
+    // Try root level properties (English)
+    if (student.firstName || student.lastName) {
+      const fullName = `${student.firstName || ''} ${student.lastName || ''}`.trim();
+      if (fullName) return fullName;
+    }
+
+    // Try root level properties (French)
+    if (student.prenom || student.nom) {
+      const fullName = `${student.prenom || ''} ${student.nom || ''}`.trim();
+      if (fullName) return fullName;
+    }
+
+    // Try nested user object
+    if (student.user) {
+      if (student.user.firstName || student.user.lastName) {
+        const fullName = `${student.user.firstName || ''} ${student.user.lastName || ''}`.trim();
+        if (fullName) return fullName;
+      }
+      if (student.user.prenom || student.user.nom) {
+        const fullName = `${student.user.prenom || ''} ${student.user.nom || ''}`.trim();
+        if (fullName) return fullName;
+      }
+    }
+
+    return 'Élève sans nom';
   }
 }

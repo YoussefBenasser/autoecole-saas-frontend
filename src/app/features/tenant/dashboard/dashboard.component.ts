@@ -8,12 +8,16 @@ import { environment } from '../../../../environments/environment';
 interface RecentStudent {
   id: string;
   name?: string;
+  prenom?: string;
+  nom?: string;
   firstName?: string;
   lastName?: string;
   user?: {
     name?: string;
     firstName?: string;
     lastName?: string;
+    prenom?: string;
+    nom?: string;
     email?: string;
   };
   email?: string;
@@ -22,7 +26,8 @@ interface RecentStudent {
 interface RecentPayment {
   id: number;
   amount: number;
-  date: string;
+  date?: string;
+  paymentDate?: string;
   studentName?: string;
   status?: string;
 }
@@ -126,7 +131,7 @@ interface RecentPayment {
                 {{ getStudentInitials(s) }}
               </div>
               <div class="tenant-info">
-                <h3 class="tenant-name">{{ (s.user?.firstName || s.firstName || '') }} {{ (s.user?.lastName || s.lastName || '') }}</h3>
+                <h3 class="tenant-name">{{ getStudentDisplayName(s) }}</h3>
                 <p class="tenant-email">{{ s.user?.email || s.email || '—' }}</p>
               </div>
             </div>
@@ -159,7 +164,7 @@ interface RecentPayment {
             <tr *ngFor="let p of recentPayments" style="border-top: 1px solid rgba(255, 255, 255, 0.08); transition: all 0.2s ease;">
               <td style="padding: 1rem 2rem; color: rgba(255, 255, 255, 0.9); font-size: 0.9rem;">{{ p.studentName || '—' }}</td>
               <td style="padding: 1rem 2rem; color: #22c55e; font-weight: 600; font-size: 0.9rem;">{{ p.amount | number }} DZD</td>
-              <td style="padding: 1rem 2rem; color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">{{ p.date | date:'dd/MM/yyyy' }}</td>
+              <td style="padding: 1rem 2rem; color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">{{ (p.paymentDate || p.date) | date:'dd/MM/yyyy' }}</td>
               <td style="padding: 1rem 2rem;">
                 <span class="status-badge" [ngClass]="p.status === 'PAID' ? 'approved' : 'pending'">
                   {{ p.status === 'PAID' ? 'Payé' : 'En attente' }}
@@ -246,12 +251,20 @@ export class TenantDashboardComponent implements OnInit {
       next: monitors => {
         this.kpiStats[1].value = String(monitors.length);
         this.cdr.detectChanges();
+      },
+      error: () => {
+        this.kpiStats[1].value = '—';
+        this.cdr.detectChanges();
       }
     });
 
     this.tenantService.getUpcomingExams().subscribe({
       next: exams => {
         this.kpiStats[2].value = String(exams.length);
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.kpiStats[2].value = '—';
         this.cdr.detectChanges();
       }
     });
@@ -260,11 +273,15 @@ export class TenantDashboardComponent implements OnInit {
       next: paymentStats => {
         this.kpiStats[3].value = String(paymentStats.numberOfPayments);
         this.cdr.detectChanges();
+      },
+      error: () => {
+        this.kpiStats[3].value = '—';
+        this.cdr.detectChanges();
       }
     });
 
     // Load recent payments
-    this.http.get<RecentPayment[]>(`${environment.apiUrl}/admin/payments/recent`).subscribe({
+    this.http.get<RecentPayment[]>(`${environment.apiUrl}/admin/payments`).subscribe({
       next: payments => {
         this.recentPayments = payments.slice(0, 5);
         this.cdr.detectChanges();
@@ -316,8 +333,8 @@ export class TenantDashboardComponent implements OnInit {
       return student.user.name.trim();
     }
     
-    const first = student.user?.firstName?.trim();
-    const last = student.user?.lastName?.trim();
+    const first = student.prenom?.trim() || student.firstName?.trim() || student.user?.prenom?.trim() || student.user?.firstName?.trim();
+    const last = student.nom?.trim() || student.lastName?.trim() || student.user?.nom?.trim() || student.user?.lastName?.trim();
     
     if (first || last) {
       return `${first || ''} ${last || ''}`.trim();

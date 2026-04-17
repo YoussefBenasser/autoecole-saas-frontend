@@ -7,9 +7,22 @@ import { ExamResponse as Exam } from '../../../core/models/exam.model';
 
 interface Student {
   id: string;
+  name?: string;
+  fullName?: string;
+  full_name?: string;
+  nom?: string;
+  prenom?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  telephone?: string;
   user?: {
-    firstName: string;
-    lastName: string;
+    firstName?: string;
+    lastName?: string;
+    prenom?: string;
+    nom?: string;
+    email?: string;
+    telephone?: string;
   };
 }
 
@@ -887,9 +900,30 @@ export class ExamsComponent implements OnInit {
 
   loadStudents() {
     this.http.get<Student[]>(`${environment.apiUrl}/admin/students`).subscribe({
-      next: (data) => this.allStudents = data,
+      next: (data) => this.allStudents = data.map(student => this.normalizeStudent(student)),
       error: (err) => console.error('Failed to load students', err)
     });
+  }
+
+  private normalizeStudent(student: any): Student {
+    return {
+      ...student,
+      prenom: student.prenom || student.firstName || student.user?.prenom || student.user?.firstName || '',
+      nom: student.nom || student.lastName || student.user?.nom || student.user?.lastName || '',
+      firstName: student.firstName || student.prenom || student.user?.firstName || student.user?.prenom || '',
+      lastName: student.lastName || student.nom || student.user?.lastName || student.user?.nom || '',
+      email: student.email || student.user?.email || '',
+      telephone: student.telephone || student.user?.telephone || '',
+      user: {
+        ...(student.user || {}),
+        firstName: student.user?.firstName || student.prenom || student.firstName || '',
+        lastName: student.user?.lastName || student.nom || student.lastName || '',
+        prenom: student.user?.prenom || student.prenom || student.firstName || '',
+        nom: student.user?.nom || student.nom || student.lastName || '',
+        email: student.user?.email || student.email || '',
+        telephone: student.user?.telephone || student.telephone || ''
+      }
+    };
   }
 
   openModal() {
@@ -925,13 +959,32 @@ export class ExamsComponent implements OnInit {
     if (!student) {
       return `Candidat ${studentId.slice(0, 6)}`;
     }
-    const name = `${student.user?.firstName || ''} ${student.user?.lastName || ''}`.trim();
+    const name = this.getStudentDisplayName(student);
     return name || `Candidat ${student.id.slice(0, 6)}`;
   }
 
   getStudentInitials(studentId: string): string {
     const student = this.allStudents.find((item) => item.id === studentId);
     if (!student) return studentId.charAt(0).toUpperCase();
-    return ((student.user?.firstName?.charAt(0) || '') + (student.user?.lastName?.charAt(0) || '')).toUpperCase() || studentId.charAt(0).toUpperCase();
+    const first = (student.prenom || student.firstName || student.user?.prenom || student.user?.firstName || '').trim();
+    const last = (student.nom || student.lastName || student.user?.nom || student.user?.lastName || '').trim();
+    if (first || last) {
+      return `${first.charAt(0) || ''}${last.charAt(0) || ''}`.toUpperCase();
+    }
+    const email = (student.email || student.user?.email || '').trim();
+    return (email.charAt(0) || studentId.charAt(0)).toUpperCase();
+  }
+
+  private getStudentDisplayName(student: Student): string {
+    if (!student) return '';
+    if (student.name?.trim()) return student.name.trim();
+    if (student.fullName?.trim()) return student.fullName.trim();
+    if (student.full_name?.trim()) return student.full_name.trim();
+    const first = (student.prenom || student.firstName || student.user?.prenom || student.user?.firstName || '').trim();
+    const last = (student.nom || student.lastName || student.user?.nom || student.user?.lastName || '').trim();
+    if (first || last) {
+      return `${first} ${last}`.trim();
+    }
+    return '';
   }
 }

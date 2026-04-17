@@ -22,18 +22,16 @@ interface SessionItem {
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="relative min-h-[500px]">
+    <div class="sessions-container">
       <!-- Header -->
-      <div class="flex items-center justify-between mb-6">
-        <div>
-          <h1 class="text-2xl font-bold text-white">Mes Séances</h1>
-          <p class="text-sm mt-1" style="color: var(--color-text-muted)">Consultez votre planning de conduite</p>
-        </div>
+      <div class="header-section">
+        <h1 class="main-title">Mes Séances</h1>
+        <p class="subtitle">Consultez votre planning de conduite</p>
       </div>
 
       <!-- Loading -->
-      <div *ngIf="isLoading" class="flex justify-center py-20">
-        <svg class="w-8 h-8 animate-spin" style="color: var(--color-accent)" fill="none" viewBox="0 0 24 24">
+      <div *ngIf="isLoading" class="loading-state">
+        <svg class="spinner" style="color: var(--color-accent)" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
         </svg>
@@ -41,17 +39,16 @@ interface SessionItem {
 
       <ng-container *ngIf="!isLoading">
         <!-- Error -->
-        <div *ngIf="errorMsg" class="mb-4 px-4 py-3 rounded-xl text-sm"
-             style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #f87171">
-          ⚠️ {{ errorMsg }}
+        <div *ngIf="errorMsg" class="error-card">
+          <span class="error-icon">⚠️</span>
+          <p class="error-text">{{ errorMsg }}</p>
         </div>
 
         <!-- ===== UPCOMING SESSIONS ===== -->
-        <div *ngIf="upcomingSessions.length > 0" class="mb-8">
-          <div class="flex items-center gap-2 mb-3">
-            <span class="text-sm font-semibold uppercase tracking-wider" style="color: #38bdf8">🚀 À venir</span>
-            <span class="px-2 py-0.5 rounded-full text-xs font-bold"
-                  style="background: rgba(56,189,248,0.15); color: #38bdf8">{{ upcomingSessions.length }}</span>
+        <div *ngIf="upcomingSessions.length > 0" class="sessions-section">
+          <div class="section-header">
+            <span class="section-label upcoming">🚀 À venir</span>
+            <span class="section-badge">{{ upcomingSessions.length }}</span>
           </div>
           <div class="rounded-2xl overflow-hidden border" style="background: var(--color-surface); border-color: var(--color-border)">
             <table class="w-full text-sm">
@@ -64,35 +61,24 @@ interface SessionItem {
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let s of upcomingSessions"
-                    class="border-t hover:bg-white/5 transition-colors"
-                    style="border-color: var(--color-border)">
-                  <td class="px-5 py-4">
-                    <div class="font-medium text-white">{{ formatDate(s.sessionDate) }}</div>
-                    <div class="text-xs mt-0.5" style="color: var(--color-text-muted)">{{ formatTime(s.startTime) }} – {{ formatTime(s.endTime) }}</div>
+                <tr *ngFor="let s of upcomingSessions" class="session-row">
+                  <td class="date-time-cell">
+                    <div class="date">{{ formatDate(s.sessionDate) }}</div>
+                    <div class="time">{{ formatTime(s.startTime) }} – {{ formatTime(s.endTime) }}</div>
                   </td>
-                  <td class="px-5 py-4">
-                    <span class="px-2 py-1 rounded-full text-xs font-medium"
-                          [ngStyle]="s.type === 'théorie'
-                            ? {'background':'rgba(168,85,247,0.15)','color':'#c084fc'}
-                            : {'background':'rgba(20,184,166,0.15)','color':'#2dd4bf'}">
+                  <td class="type-cell">
+                    <span class="type-badge" [ngClass]="s.type === 'théorie' ? 'theory' : 'practical'">
                       {{ s.type === 'théorie' ? '📖 Théorie' : '🚗 Pratique' }}
                     </span>
                   </td>
-                  <td class="px-5 py-4">
-                    <div class="flex items-center gap-2">
-                      <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-                           style="background: linear-gradient(135deg, #f59e0b, #ef4444)">
-                        {{ getMonitorInitial(s) }}
-                      </div>
-                      <span class="font-medium text-white">{{ getMonitorLabel(s) }}</span>
+                  <td class="monitor-cell">
+                    <div class="monitor-info">
+                      <div class="monitor-avatar">{{ getMonitorInitial(s) }}</div>
+                      <span class="monitor-name">{{ getMonitorLabel(s) }}</span>
                     </div>
                   </td>
-                  <td class="px-5 py-4">
-                    <span class="px-2 py-1.5 rounded-full text-xs font-medium"
-                          style="background: rgba(56,189,248,0.15); color: #38bdf8">
-                      ⏳ Planifiée
-                    </span>
+                  <td class="status-cell">
+                    <span class="status-badge scheduled">⏳ Planifiée</span>
                   </td>
                 </tr>
               </tbody>
@@ -101,50 +87,38 @@ interface SessionItem {
         </div>
 
         <!-- ===== PAST SESSIONS ===== -->
-        <div *ngIf="pastSessions.length > 0">
-          <div class="flex items-center gap-2 mb-3">
-            <span class="text-sm font-semibold uppercase tracking-wider" style="color: var(--color-text-muted)">📋 Passées</span>
-            <span class="px-2 py-0.5 rounded-full text-xs font-bold"
-                  style="background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.55)">{{ pastSessions.length }}</span>
+        <div *ngIf="pastSessions.length > 0" class="sessions-section">
+          <div class="section-header">
+            <span class="section-label past">📋 Passées</span>
+            <span class="section-badge">{{ pastSessions.length }}</span>
           </div>
-          <div class="rounded-2xl overflow-hidden border" style="background: var(--color-surface); border-color: var(--color-border)">
-            <table class="w-full text-sm">
+          <div class="table-container">
+            <table class="sessions-table">
               <thead>
-                <tr style="background: var(--color-surface-2)">
-                  <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider" style="color: var(--color-text-muted)">Date &amp; Heure</th>
-                  <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider" style="color: var(--color-text-muted)">Type</th>
-                  <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider" style="color: var(--color-text-muted)">Moniteur</th>
-                  <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider" style="color: var(--color-text-muted)">Statut</th>
+                <tr>
+                  <th>Date &amp; Heure</th>
+                  <th>Type</th>
+                  <th>Moniteur</th>
+                  <th>Statut</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let s of pastSessions"
-                    class="border-t hover:bg-white/5 transition-colors"
-                    style="border-color: var(--color-border)">
-                  <td class="px-5 py-4">
-                    <div class="font-medium" style="color: rgba(255,255,255,0.7)">{{ formatDate(s.sessionDate) }}</div>
-                    <div class="text-xs mt-0.5" style="color: var(--color-text-muted)">{{ formatTime(s.startTime) }} – {{ formatTime(s.endTime) }}</div>
+                <tr *ngFor="let s of pastSessions" class="session-row">
+                  <td class="date-time-cell">
+                    <div class="date">{{ formatDate(s.sessionDate) }}</div>
+                    <div class="time">{{ formatTime(s.startTime) }} – {{ formatTime(s.endTime) }}</div>
                   </td>
-                  <td class="px-5 py-4">
-                    <span class="px-2 py-1 rounded-full text-xs font-medium"
-                          style="background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.45)">
-                      {{ s.type === 'théorie' ? '📖 Théorie' : '🚗 Pratique' }}
-                    </span>
+                  <td class="type-cell">
+                    <span class="type-badge muted">{{ s.type === 'théorie' ? '📖 Théorie' : '🚗 Pratique' }}</span>
                   </td>
-                  <td class="px-5 py-4">
-                    <div class="flex items-center gap-2">
-                      <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-                           style="background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5)">
-                        {{ getMonitorInitial(s) }}
-                      </div>
-                      <span style="color: rgba(255,255,255,0.6)">{{ getMonitorLabel(s) }}</span>
+                  <td class="monitor-cell">
+                    <div class="monitor-info">
+                      <div class="monitor-avatar muted">{{ getMonitorInitial(s) }}</div>
+                      <span class="monitor-name muted">{{ getMonitorLabel(s) }}</span>
                     </div>
                   </td>
-                  <td class="px-5 py-4">
-                    <span class="px-2 py-1.5 rounded-full text-xs font-medium"
-                          [ngStyle]="s.status === 'COMPLETED'
-                            ? {'background':'rgba(34,197,94,0.15)','color':'#4ade80'}
-                            : {'background':'rgba(239,68,68,0.15)','color':'#f87171'}">
+                  <td class="status-cell">
+                    <span class="status-badge" [ngClass]="s.status === 'COMPLETED' ? 'completed' : 'cancelled'">
                       {{ s.status === 'COMPLETED' ? '✅ Terminée' : '❌ Annulée' }}
                     </span>
                   </td>
@@ -155,17 +129,347 @@ interface SessionItem {
         </div>
 
         <!-- Empty state -->
-        <div *ngIf="sessions.length === 0"
-             class="rounded-2xl p-12 text-center border" style="background: var(--color-surface); border-color: var(--color-border)">
-          <div class="w-16 h-16 rounded-full flex items-center justify-center text-3xl mx-auto mb-4" style="background: rgba(79,70,229,0.15)">📅</div>
-          <h3 class="text-lg font-bold text-white mb-2">Aucune séance à venir</h3>
-          <p class="text-sm max-w-md mx-auto" style="color: var(--color-text-muted)">
+        <div *ngIf="sessions.length === 0" class="empty-state">
+          <div class="empty-icon">📅</div>
+          <h3 class="empty-title">Aucune séance à venir</h3>
+          <p class="empty-text">
             Vous n'avez pas encore de séance planifiée. Votre moniteur planifiera bientôt vos premiers cours.
           </p>
         </div>
       </ng-container>
     </div>
-  `
+  `,
+  styles: [`
+    .sessions-container {
+      padding: 2rem;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Header */
+    .header-section {
+      margin-bottom: 2.5rem;
+      animation: slideDown 0.4s ease-out;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .main-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin: 0 0 0.5rem;
+      letter-spacing: -0.01em;
+    }
+
+    .subtitle {
+      font-size: 0.95rem;
+      color: var(--color-text-muted);
+      margin: 0;
+      opacity: 0.9;
+    }
+
+    /* Loading State */
+    .loading-state {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem;
+    }
+
+    .spinner {
+      width: 2rem;
+      height: 2rem;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Error Card */
+    .error-card {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.25rem;
+      border-radius: 1rem;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      animation: slideDown 0.3s ease-out;
+    }
+
+    .error-icon {
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .error-text {
+      margin: 0;
+      color: #f87171;
+      font-size: 0.95rem;
+    }
+
+    /* Sessions Sections */
+    .sessions-section {
+      margin-bottom: 2rem;
+      animation: slideUp 0.4s ease-out;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .section-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .section-label.upcoming {
+      color: #38bdf8;
+    }
+
+    .section-label.past {
+      color: var(--color-text-muted);
+    }
+
+    .section-badge {
+      padding: 0.375rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+    }
+
+    .section-label.past ~ .section-badge {
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    /* Table Container */
+    .table-container {
+      border-radius: 1.25rem;
+      overflow: hidden;
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(51, 65, 85, 0.6) 100%);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      overflow-x: auto;
+    }
+
+    /* Table Styling */
+    .sessions-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px;
+      font-size: 0.9rem;
+    }
+
+    .sessions-table thead {
+      background: linear-gradient(135deg, rgba(51, 65, 85, 0.4) 0%, rgba(51, 65, 85, 0.2) 100%);
+    }
+
+    .sessions-table th {
+      padding: 1rem 1.5rem;
+      text-align: left;
+      color: var(--color-text-muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .session-row {
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      transition: background 0.2s ease;
+    }
+
+    .session-row:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .sessions-table td {
+      padding: 1rem 1.5rem;
+      color: var(--color-text);
+    }
+
+    .date-time-cell {
+      min-width: 200px;
+    }
+
+    .date {
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .time {
+      font-size: 0.85rem;
+      color: var(--color-text-muted);
+      margin-top: 0.25rem;
+    }
+
+    .type-cell {
+      width: 140px;
+    }
+
+    .type-badge {
+      display: inline-block;
+      padding: 0.5rem 0.875rem;
+      border-radius: 0.625rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .type-badge.theory {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(168, 85, 247, 0.05));
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.2);
+    }
+
+    .type-badge.practical {
+      background: linear-gradient(135deg, rgba(20, 184, 166, 0.15), rgba(20, 184, 166, 0.05));
+      color: #2dd4bf;
+      border: 1px solid rgba(20, 184, 166, 0.2);
+    }
+
+    .type-badge.muted {
+      background: rgba(255, 255, 255, 0.06);
+      color: rgba(255, 255, 255, 0.45);
+      border: none;
+    }
+
+    .monitor-cell {
+      min-width: 200px;
+    }
+
+    .monitor-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .monitor-avatar {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #ffffff;
+      background: linear-gradient(135deg, #f59e0b, #ef4444);
+      flex-shrink: 0;
+    }
+
+    .monitor-avatar.muted {
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .monitor-name {
+      font-weight: 500;
+      color: #ffffff;
+    }
+
+    .monitor-name.muted {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .status-cell {
+      min-width: 140px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.5rem 0.875rem;
+      border-radius: 0.625rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .status-badge.scheduled {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(56, 189, 248, 0.05));
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+
+    .status-badge.completed {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.05));
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+
+    .status-badge.cancelled {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05));
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    /* Empty State */
+    .empty-state {
+      padding: 3rem;
+      text-align: center;
+      border-radius: 1.25rem;
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(51, 65, 85, 0.6) 100%);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      animation: slideUp 0.4s ease-out;
+    }
+
+    .empty-icon {
+      font-size: 3.5rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .empty-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin: 0 0 0.5rem;
+    }
+
+    .empty-text {
+      color: var(--color-text-muted);
+      margin: 0;
+      font-size: 0.95rem;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    @media (max-width: 768px) {
+      .sessions-container {
+        padding: 1rem;
+      }
+
+      .main-title {
+        font-size: 1.5rem;
+      }
+
+      .sessions-table {
+        min-width: 100%;
+      }
+    }
+  `]
 })
 export class SessionsComponent implements OnInit {
   sessions: SessionItem[] = [];

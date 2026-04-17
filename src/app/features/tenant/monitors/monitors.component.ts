@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
 interface Monitor {
@@ -693,11 +694,31 @@ export class MonitorsComponent implements OnInit {
     );
   }
 
+  private normalizeMonitor(raw: any): Monitor {
+    return {
+      ...raw,
+      prenom: raw.prenom || raw.firstName || raw.user?.prenom || raw.user?.firstName || '',
+      nom: raw.nom || raw.lastName || raw.user?.nom || raw.user?.lastName || '',
+      email: raw.email || raw.user?.email || '',
+      telephone: raw.telephone || raw.user?.telephone || ''
+    };
+  }
+
   loadMonitors() {
     this.isLoading = true;
-    this.http.get<Monitor[]>(`${environment.apiUrl}/admin/monitors`).subscribe({
-      next: (data) => { this.monitors = data; this.isLoading = false; },
-      error: () => { this.isLoading = false; }
+    this.http.get<any>(`${environment.apiUrl}/admin/monitors`).pipe(
+      finalize(() => this.isLoading = false)
+    ).subscribe({
+      next: (data) => {
+        const monitorsArray = Array.isArray(data)
+          ? data
+          : data?.data || data?.items || data?.monitors || [];
+        this.monitors = (monitorsArray || []).map((m: any) => this.normalizeMonitor(m));
+      },
+      error: (err) => {
+        console.error('Failed to load monitors', err);
+        this.monitors = [];
+      }
     });
   }
 

@@ -17,6 +17,15 @@ interface Contract {
   totalPrice: number;
 }
 
+interface Payment {
+  id: number;
+  amount: number;
+  date: string;
+  studentName?: string;
+  status?: string;
+  contractId?: string;
+}
+
 @Component({
   selector: 'app-payments',
   standalone: true,
@@ -51,7 +60,7 @@ interface Contract {
               <p class="text-sm font-medium" style="color: var(--color-text-muted)">Revenus Totaux</p>
             </div>
           </div>
-          <p class="text-3xl font-bold text-white">{{ stats.totalRevenue | number }} TND</p>
+          <p class="text-3xl font-bold text-white">{{ stats.totalRevenue | number }} DZD</p>
         </div>
 
         <!-- Number of Payments -->
@@ -75,7 +84,7 @@ interface Contract {
               <p class="text-sm font-medium" style="color: var(--color-text-muted)">Paiement Moyen</p>
             </div>
           </div>
-          <p class="text-3xl font-bold text-white">{{ stats.averagePayment | number:'1.0-2' }} TND</p>
+          <p class="text-3xl font-bold text-white">{{ stats.averagePayment | number:'1.0-2' }} DZD</p>
         </div>
 
         <!-- Fully Paid Students -->
@@ -93,6 +102,44 @@ interface Contract {
 
       <div *ngIf="!isLoading && !stats" class="text-center py-12 border rounded-2xl" style="background: var(--color-surface); border-color: var(--color-border)">
         <p style="color: var(--color-text-muted)">Aucune statistique de paiement disponible pour le moment.</p>
+      </div>
+
+      <!-- Payments List -->
+      <div *ngIf="!isLoading" class="rounded-2xl overflow-hidden border mt-8" style="background: var(--color-surface); border-color: var(--color-border)">
+        <div class="px-6 py-4 border-b flex items-center justify-between" style="border-color: var(--color-border); background: var(--color-surface-2)">
+          <h2 class="text-base font-bold text-white">Historique des paiements</h2>
+          <span class="text-xs px-2 py-1 rounded-full font-medium" style="background: rgba(16,185,129,0.15); color: #34d399">
+            {{ payments.length }} paiement(s)
+          </span>
+        </div>
+        <table class="w-full text-sm">
+          <thead>
+            <tr style="background: var(--color-surface-2)">
+              <th class="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider" style="color: var(--color-text-muted)">Élève</th>
+              <th class="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider" style="color: var(--color-text-muted)">Montant</th>
+              <th class="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider" style="color: var(--color-text-muted)">Date</th>
+              <th class="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider" style="color: var(--color-text-muted)">Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of payments" class="border-t hover:bg-white/5 transition-colors" style="border-color: var(--color-border)">
+              <td class="px-6 py-4 text-white">{{ p.studentName || '—' }}</td>
+              <td class="px-6 py-4 font-semibold" style="color: #22c55e">{{ p.amount | number }} DZD</td>
+              <td class="px-6 py-4" style="color: var(--color-text-muted)">{{ p.date | date:'dd/MM/yyyy' }}</td>
+              <td class="px-6 py-4">
+                <span class="px-2 py-1 rounded-full text-xs font-medium"
+                      [ngStyle]="p.status === 'PAID' ? {'background':'rgba(34,197,94,0.15)','color':'#4ade80'} : {'background':'rgba(251,191,36,0.15)','color':'#fbbf24'}">
+                  {{ p.status === 'PAID' ? '✓ Payé' : '⏳ En attente' }}
+                </span>
+              </td>
+            </tr>
+            <tr *ngIf="payments.length === 0">
+              <td colspan="4" class="px-6 py-12 text-center" style="color: var(--color-text-muted)">
+                Aucun paiement enregistré.
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <!-- Record Payment Modal Overlay -->
@@ -113,17 +160,17 @@ interface Contract {
                         style="background: rgba(0,0,0,0.2); border-color: var(--color-border)">
                   <option value="" disabled selected>Sélectionner un contrat</option>
                   <option *ngFor="let contract of contracts" [value]="contract.id">
-                    {{ contract.studentName }} (Total: {{ contract.totalPrice }} TND)
+                    {{ contract.studentName }} (Total: {{ contract.totalPrice }} DZD)
                   </option>
                 </select>
                 <p *ngIf="contracts.length === 0" class="text-xs mt-1 text-amber-500">Aucun contrat disponible. Veuillez créer un contrat d'abord.</p>
               </div>
               <div>
-                <label class="block text-sm font-medium mb-1" style="color: var(--color-text-muted)">Montant perçu (TND)</label>
+                <label class="block text-sm font-medium mb-1" style="color: var(--color-text-muted)">Montant perçu (DZD)</label>
                 <input type="number" name="amount" [(ngModel)]="newPayment.amount" required min="1" step="0.01"
                        class="w-full px-4 py-2 rounded-lg border text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
                        style="background: rgba(0,0,0,0.2); border-color: var(--color-border)"
-                       placeholder="Ex: 50.00" />
+                       placeholder="Ex: 5000" />
               </div>
             </div>
             
@@ -150,6 +197,7 @@ interface Contract {
 export class PaymentsComponent implements OnInit {
   stats: PaymentStats | null = null;
   contracts: Contract[] = [];
+  payments: Payment[] = [];
   isLoading = true;
 
   isModalOpen = false;
@@ -159,7 +207,27 @@ export class PaymentsComponent implements OnInit {
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
-    this.loadStats();
+    this.loadAll();
+  }
+
+  loadAll() {
+    this.isLoading = true;
+    this.http.get<PaymentStats>(`${environment.apiUrl}/admin/payments/stats`).subscribe({
+      next: (data) => {
+        this.stats = data;
+        this.isLoading = false;
+      },
+      error: () => {
+        this.isLoading = false;
+      }
+    });
+
+    this.http.get<Payment[]>(`${environment.apiUrl}/admin/payments`).subscribe({
+      next: (data) => {
+        this.payments = data;
+      },
+      error: () => {}
+    });
   }
 
   loadStats() {
@@ -172,6 +240,13 @@ export class PaymentsComponent implements OnInit {
       error: () => {
         this.isLoading = false;
       }
+    });
+
+    this.http.get<Payment[]>(`${environment.apiUrl}/admin/payments`).subscribe({
+      next: (data) => {
+        this.payments = data;
+      },
+      error: () => {}
     });
   }
 

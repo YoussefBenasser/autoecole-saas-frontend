@@ -68,6 +68,11 @@ export const routes: Routes = [
         path: 'students',
         loadComponent: () =>
           import('./features/super-admin/students/students.component').then(m => m.StudentsComponent)
+      },
+      {
+        path: 'monitors',
+        loadComponent: () =>
+          import('./features/super-admin/monitors/monitors.component').then(m => m.SuperAdminMonitorsComponent)
       }
     ]
   },

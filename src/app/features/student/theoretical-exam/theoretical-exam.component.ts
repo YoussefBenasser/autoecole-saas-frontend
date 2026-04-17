@@ -33,168 +33,121 @@ type ExamPhase = 'loading' | 'intro' | 'exam' | 'submitting' | 'result' | 'error
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
   template: `
-    <div class="relative min-h-[500px] max-w-4xl mx-auto">
+    <div class="exam-container">
 
       <!-- ===== LOADING PHASE ===== -->
-      <div *ngIf="phase === 'loading'" class="flex flex-col items-center justify-center py-24">
-        <svg class="w-10 h-10 animate-spin mb-4" style="color: var(--color-accent)" fill="none" viewBox="0 0 24 24">
+      <div *ngIf="phase === 'loading'" class="loading-state">
+        <svg class="spinner" style="color: var(--color-accent)" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
         </svg>
-        <p class="text-white font-medium">{{ loadingMessage }}</p>
+        <p class="loading-text">{{ loadingMessage }}</p>
       </div>
 
       <!-- ===== ERROR PHASE ===== -->
-      <div *ngIf="phase === 'error'" class="p-8 rounded-2xl border text-center"
-           style="background: var(--color-surface); border-color: rgba(239,68,68,0.3)">
-        <div class="text-5xl mb-4">⚠️</div>
-        <h2 class="text-xl font-bold text-white mb-2">Impossible de charger l'examen</h2>
-        <p class="text-sm mb-6" style="color: var(--color-text-muted)">{{ errorMsg }}</p>
-        <button (click)="restartExam()"
-                class="px-6 py-2.5 rounded-xl font-semibold text-sm text-white transition-all"
-                style="background: rgba(79,70,229,0.5); border: 1px solid rgba(79,70,229,0.5)">
-          🔄 Réessayer
-        </button>
+      <div *ngIf="phase === 'error'" class="error-card">
+        <div class="error-icon">⚠️</div>
+        <h2 class="error-title">Impossible de charger l'examen</h2>
+        <p class="error-text">{{ errorMsg }}</p>
+        <button (click)="restartExam()" class="retry-btn">🔄 Réessayer</button>
       </div>
 
       <!-- ===== INTRO PHASE ===== -->
-      <div *ngIf="phase === 'intro'" class="p-8 rounded-2xl border text-center"
-           style="background: var(--color-surface); border-color: var(--color-border)">
-        <div class="w-20 h-20 rounded-full flex items-center justify-center text-4xl mx-auto mb-6"
-             style="background: rgba(79,70,229,0.15)">📝</div>
-        <h1 class="text-2xl font-bold text-white mb-2">Examen Théorique (Code)</h1>
-        <p class="text-sm mb-6" style="color: var(--color-text-muted)">
-          Test de connaissance — {{ questions.length }} questions
-        </p>
-        <div class="grid grid-cols-3 gap-4 mb-8 text-center">
-          <div class="p-4 rounded-xl" style="background: rgba(255,255,255,0.05); border: 1px solid var(--color-border)">
-            <div class="text-2xl font-bold text-white">{{ questions.length }}</div>
-            <div class="text-xs mt-1" style="color: var(--color-text-muted)">Questions</div>
+      <div *ngIf="phase === 'intro'" class="intro-card">
+        <div class="intro-icon">📝</div>
+        <h1 class="intro-title">Examen Théorique (Code)</h1>
+        <p class="intro-subtitle">Test de connaissance — {{ questions.length }} questions</p>
+        
+        <div class="intro-stats">
+          <div class="stat-box">
+            <div class="stat-value">{{ questions.length }}</div>
+            <div class="stat-label">Questions</div>
           </div>
-          <div class="p-4 rounded-xl" style="background: rgba(255,255,255,0.05); border: 1px solid var(--color-border)">
-            <div class="text-2xl font-bold" style="color: #4ade80">75%</div>
-            <div class="text-xs mt-1" style="color: var(--color-text-muted)">Score minimum</div>
+          <div class="stat-box">
+            <div class="stat-value success">75%</div>
+            <div class="stat-label">Score minimum</div>
           </div>
-          <div class="p-4 rounded-xl" style="background: rgba(255,255,255,0.05); border: 1px solid var(--color-border)">
-            <div class="text-2xl font-bold" style="color: #38bdf8">∞</div>
-            <div class="text-xs mt-1" style="color: var(--color-text-muted)">Temps libre</div>
+          <div class="stat-box">
+            <div class="stat-value">∞</div>
+            <div class="stat-label">Temps libre</div>
           </div>
         </div>
-        <button (click)="startExam()"
-                class="px-8 py-3 rounded-xl font-bold text-white text-base transition-all hover:scale-105"
-                style="background: linear-gradient(135deg, #4f46e5, #06b6d4); box-shadow: 0 8px 24px rgba(79,70,229,0.35)">
-          🚀 Commencer l'examen
-        </button>
+
+        <button (click)="startExam()" class="start-btn">🚀 Commencer l'examen</button>
       </div>
 
       <!-- ===== EXAM PHASE ===== -->
-      <div *ngIf="phase === 'exam'">
+      <div *ngIf="phase === 'exam'" class="exam-phase">
         <!-- Header -->
-        <div class="flex items-center justify-between mb-6">
+        <div class="exam-header">
           <div>
-            <h1 class="text-xl font-bold text-white">Examen Théorique</h1>
-            <p class="text-xs mt-1" style="color: var(--color-text-muted)">
-              Répondez à toutes les questions avant de soumettre
-            </p>
+            <h1 class="exam-title">Examen Théorique</h1>
+            <p class="exam-subtitle">Répondez à toutes les questions avant de soumettre</p>
           </div>
-          <div class="text-right">
-            <div class="text-2xl font-bold text-white">{{ currentQuestionIndex + 1 }}<span style="color: var(--color-text-muted)">/{{ questions.length }}</span></div>
-            <div class="text-xs" style="color: var(--color-text-muted)">{{ answeredCount }} répondu(s)</div>
+          <div class="question-progress">
+            <div class="progress-number">{{ currentQuestionIndex + 1 }}<span class="progress-total">/{{ questions.length }}</span></div>
+            <div class="progress-answered">{{ answeredCount }} répondu(s)</div>
           </div>
         </div>
 
         <!-- Progress bar -->
-        <div class="w-full h-1.5 rounded-full mb-6" style="background: rgba(255,255,255,0.08)">
-          <div class="h-1.5 rounded-full transition-all duration-300"
-               style="background: linear-gradient(90deg, #4f46e5, #06b6d4)"
-               [style.width]="progressPercent + '%'">
-          </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" [style.width]="progressPercent + '%'"></div>
         </div>
 
         <!-- Question Card -->
-        <div class="p-6 md:p-8 rounded-2xl border mb-6"
-             style="background: var(--color-surface); border-color: var(--color-border)">
+        <div class="question-card">
           <!-- Category tag -->
-          <span class="inline-block px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider mb-4"
-                style="background: rgba(79,70,229,0.15); color: #818cf8">
-            {{ currentQuestion?.category || 'Général' }}
-          </span>
+          <span class="category-tag">{{ currentQuestion?.category || 'Général' }}</span>
 
           <!-- Question text -->
-          <h3 class="text-lg md:text-xl font-bold text-white leading-relaxed mb-6">
-            {{ currentQuestion?.questionText }}
-          </h3>
+          <h3 class="question-text">{{ currentQuestion?.questionText }}</h3>
 
           <!-- Options -->
-          <div class="flex flex-col gap-3">
+          <div class="options-container">
             <label *ngFor="let option of currentQuestion?.options; let i = index"
-                   class="flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all"
-                   [ngStyle]="{
-                     'background': answers[currentQuestion.id] === option.optionText
-                       ? 'rgba(79,70,229,0.12)' : 'rgba(255,255,255,0.03)',
-                     'border-color': answers[currentQuestion.id] === option.optionText
-                       ? 'rgba(79,70,229,0.5)' : 'rgba(255,255,255,0.08)'
-                   }"
+                   class="option-label"
+                   [class.selected]="answers[currentQuestion.id] === option.optionText"
                    (click)="selectAnswer(currentQuestion.id, option.optionText)">
               <!-- Radio circle -->
-              <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all"
-                   [ngStyle]="{
-                     'border-color': answers[currentQuestion.id] === option.optionText ? '#818cf8' : 'rgba(255,255,255,0.3)',
-                     'background': answers[currentQuestion.id] === option.optionText ? 'rgba(79,70,229,0.3)' : 'transparent'
-                   }">
-                <div *ngIf="answers[currentQuestion.id] === option.optionText"
-                     class="w-2.5 h-2.5 rounded-full"
-                     style="background: #818cf8"></div>
-              </div>
+              <div class="radio-circle" [class.selected]="answers[currentQuestion.id] === option.optionText"></div>
               <!-- Option letter + text -->
-              <div class="flex items-center gap-3 flex-1">
-                <span class="w-6 h-6 rounded flex items-center justify-center text-xs font-bold shrink-0"
-                      [ngStyle]="{'background': 'rgba(255,255,255,0.06)', 'color': 'rgba(255,255,255,0.5)'}">
-                  {{ ['A','B','C','D'][i] }}
-                </span>
-                <span class="text-white">{{ option.optionText }}</span>
+              <div class="option-content">
+                <span class="option-letter">{{ ['A','B','C','D'][i] }}</span>
+                <span class="option-text">{{ option.optionText }}</span>
               </div>
             </label>
           </div>
         </div>
 
         <!-- Navigation -->
-        <div class="flex items-center justify-between gap-4">
-          <button (click)="previousQuestion()" [disabled]="currentQuestionIndex === 0"
-                  class="px-5 py-2.5 rounded-xl font-semibold text-sm transition-all disabled:opacity-40"
-                  style="background: rgba(255,255,255,0.06); border: 1px solid var(--color-border); color: white">
+        <div class="nav-controls">
+          <button (click)="previousQuestion()" [disabled]="currentQuestionIndex === 0" class="nav-btn nav-prev">
             ← Précédent
           </button>
 
           <!-- Question dot navigation -->
-          <div class="hidden md:flex gap-1 flex-wrap justify-center max-w-xs">
+          <div class="question-dots">
             <button *ngFor="let q of questions; let i = index"
                     (click)="goToQuestion(i)"
-                    class="w-6 h-6 rounded text-xs font-bold transition-all"
-                    [ngStyle]="{
-                      'background': i === currentQuestionIndex
-                        ? 'rgba(79,70,229,0.5)'
-                        : answers[q.id] ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.08)',
-                      'color': i === currentQuestionIndex ? 'white'
-                        : answers[q.id] ? '#4ade80' : 'rgba(255,255,255,0.4)'
-                    }">
+                    class="dot"
+                    [class.current]="i === currentQuestionIndex"
+                    [class.answered]="answers[q.id]">
               {{ i + 1 }}
             </button>
           </div>
 
-          <div class="flex gap-3">
+          <div class="nav-right">
             <button *ngIf="currentQuestionIndex < questions.length - 1"
                     (click)="nextQuestion()"
-                    class="px-5 py-2.5 rounded-xl font-semibold text-sm text-white transition-all hover:opacity-90"
-                    style="background: rgba(79,70,229,0.4); border: 1px solid rgba(79,70,229,0.4)">
+                    class="nav-btn nav-next">
               Suivant →
             </button>
 
             <button *ngIf="currentQuestionIndex === questions.length - 1 || answeredCount === questions.length"
                     (click)="submitTest()"
                     [disabled]="answeredCount === 0"
-                    class="px-6 py-2.5 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-40"
-                    style="background: linear-gradient(135deg, #16a34a, #22c55e); box-shadow: 0 4px 16px rgba(34,197,94,0.3)">
+                    class="submit-btn">
               ✅ Soumettre ({{ answeredCount }}/{{ questions.length }})
             </button>
           </div>
@@ -202,83 +155,715 @@ type ExamPhase = 'loading' | 'intro' | 'exam' | 'submitting' | 'result' | 'error
       </div>
 
       <!-- ===== SUBMITTING PHASE ===== -->
-      <div *ngIf="phase === 'submitting'" class="flex flex-col items-center justify-center py-24">
-        <svg class="w-10 h-10 animate-spin mb-4" style="color: #4ade80" fill="none" viewBox="0 0 24 24">
+      <div *ngIf="phase === 'submitting'" class="submitting-state">
+        <svg class="spinner" style="color: #4ade80" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
         </svg>
-        <p class="text-white font-medium">Correction en cours...</p>
+        <p class="submitting-text">Correction en cours...</p>
       </div>
 
       <!-- ===== RESULT PHASE ===== -->
-      <div *ngIf="phase === 'result' && result"
-           class="p-8 rounded-2xl border text-center"
-           style="background: var(--color-surface); border-color: var(--color-border)">
-
+      <div *ngIf="phase === 'result' && result" class="result-card">
         <!-- Big emoji result -->
-        <div class="w-28 h-28 rounded-full flex items-center justify-center text-6xl mx-auto mb-6"
-             [ngStyle]="{'background': result.passed ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)'}">
+        <div class="result-emoji" [class.passed]="result.passed">
           {{ result.passed ? '🎉' : '📖' }}
         </div>
 
         <!-- Result title -->
-        <h2 class="text-3xl font-bold mb-2 text-white">
+        <h2 class="result-title">
           {{ result.passed ? 'Félicitations !' : 'Continuez vos révisions !' }}
         </h2>
-        <p class="mb-8" style="color: var(--color-text-muted)">
+        <p class="result-message">
           {{ result.passed ? "Vous avez réussi l'examen théorique." : "Vous pouvez repasser l'examen à tout moment." }}
         </p>
 
         <!-- Score display -->
-        <div class="inline-flex items-center gap-6 px-8 py-5 rounded-2xl mb-8"
-             style="background: rgba(255,255,255,0.05); border: 1px solid var(--color-border)">
-          <div class="text-center">
-            <div class="text-5xl font-black mb-1"
-                 [ngStyle]="{'color': result.passed ? '#4ade80' : '#f87171'}">
-              {{ result.score }}
-            </div>
-            <div class="text-xs" style="color: var(--color-text-muted)">Score</div>
+        <div class="score-display">
+          <div class="score-item">
+            <div class="score-number" [class.passed]="result.passed">{{ result.score }}</div>
+            <div class="score-label">Score</div>
           </div>
-          <div class="text-3xl" style="color: var(--color-text-muted)">/</div>
-          <div class="text-center">
-            <div class="text-5xl font-black text-white mb-1">{{ result.totalQuestions }}</div>
-            <div class="text-xs" style="color: var(--color-text-muted)">Total</div>
+          <div class="score-divider">/</div>
+          <div class="score-item">
+            <div class="score-number">{{ result.totalQuestions }}</div>
+            <div class="score-label">Total</div>
           </div>
-          <div class="w-px h-12" style="background: var(--color-border)"></div>
-          <div class="text-center">
-            <div class="text-3xl font-black mb-1"
-                 [ngStyle]="{'color': result.passed ? '#4ade80' : '#f87171'}">
-              {{ getScorePercent() }}%
-            </div>
-            <div class="text-xs" style="color: var(--color-text-muted)">Résultat</div>
+          <div class="score-divider-vertical"></div>
+          <div class="score-item">
+            <div class="score-number" [class.passed]="result.passed">{{ getScorePercent() }}%</div>
+            <div class="score-label">Résultat</div>
           </div>
         </div>
 
         <!-- Badge -->
-        <div class="inline-block px-4 py-2 rounded-full text-sm font-bold mb-8"
-             [ngStyle]="result.passed
-               ? {'background':'rgba(34,197,94,0.15)','color':'#4ade80','border':'1px solid rgba(34,197,94,0.25)'}
-               : {'background':'rgba(239,68,68,0.15)','color':'#f87171','border':'1px solid rgba(239,68,68,0.25)'}">
+        <span class="result-badge" [class.passed]="result.passed">
           {{ result.passed ? '✅ ADMIS (≥ 75%)' : '❌ REFUSÉ (< 75%)' }}
-        </div>
+        </span>
 
         <!-- Actions -->
-        <div class="flex gap-3 justify-center flex-wrap">
-          <button (click)="restartExam()"
-                  class="px-6 py-2.5 rounded-xl font-semibold text-sm text-white transition-all hover:opacity-90"
-                  style="background: rgba(79,70,229,0.4); border: 1px solid rgba(79,70,229,0.4)">
-            🔄 Repasser l'examen
-          </button>
-          <a routerLink="/student/exams"
-             class="px-6 py-2.5 rounded-xl font-semibold text-sm text-white transition-all hover:opacity-90 inline-flex items-center"
-             style="background: rgba(255,255,255,0.06); border: 1px solid var(--color-border)">
-            ← Retour aux examens
-          </a>
+        <div class="result-actions">
+          <button (click)="restartExam()" class="action-btn retry-btn">🔄 Repasser l'examen</button>
+          <a routerLink="/student/exams" class="action-btn back-btn">← Retour aux examens</a>
         </div>
       </div>
 
     </div>
-  `
+  `,
+  styles: [`
+    .exam-container {
+      padding: 2rem;
+      max-width: 56rem;
+      margin: 0 auto;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Loading State */
+    .loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 6rem 2rem;
+    }
+
+    .spinner {
+      width: 2.5rem;
+      height: 2.5rem;
+      margin-bottom: 1rem;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      color: var(--color-text-muted);
+      font-weight: 500;
+      margin: 0;
+    }
+
+    /* Error Card */
+    .error-card,
+    .intro-card {
+      padding: 2rem;
+      border-radius: 1.25rem;
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(51, 65, 85, 0.6) 100%);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      animation: slideUp 0.4s ease-out;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .error-card {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(51, 65, 85, 0.6) 100%);
+      border-color: rgba(239, 68, 68, 0.2);
+    }
+
+    .error-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .error-title,
+    .intro-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin: 0 0 0.5rem;
+    }
+
+    .error-title {
+      color: #f87171;
+    }
+
+    .error-text,
+    .intro-subtitle {
+      color: var(--color-text-muted);
+      margin: 0 0 1.5rem;
+      font-size: 0.95rem;
+    }
+
+    .retry-btn,
+    .start-btn {
+      padding: 0.75rem 2rem;
+      border: none;
+      border-radius: 0.75rem;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: inline-block;
+    }
+
+    .retry-btn {
+      background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+    }
+
+    .retry-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(79, 70, 229, 0.3);
+    }
+
+    /* Intro Phase */
+    .intro-icon {
+      font-size: 3rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .intro-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-box {
+      padding: 1.5rem;
+      border-radius: 0.875rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-value.success {
+      color: #4ade80;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin: 0;
+    }
+
+    .start-btn {
+      background: linear-gradient(135deg, #4f46e5, #06b6d4);
+      color: #ffffff;
+      padding: 1rem 3rem;
+      font-size: 1rem;
+      box-shadow: 0 8px 24px rgba(79, 70, 229, 0.35);
+    }
+
+    .start-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(79, 70, 229, 0.45);
+    }
+
+    /* Exam Phase */
+    .exam-phase {
+      animation: slideUp 0.4s ease-out;
+    }
+
+    .exam-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+
+    .exam-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin: 0 0 0.25rem;
+    }
+
+    .exam-subtitle {
+      font-size: 0.85rem;
+      color: var(--color-text-muted);
+      margin: 0;
+    }
+
+    .question-progress {
+      text-align: right;
+    }
+
+    .progress-number {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .progress-total {
+      color: var(--color-text-muted);
+    }
+
+    .progress-answered {
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+      margin-top: 0.25rem;
+    }
+
+    /* Progress Bar */
+    .progress-bar-container {
+      width: 100%;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      margin-bottom: 2rem;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #4f46e5, #06b6d4);
+      box-shadow: 0 0 10px rgba(79, 70, 229, 0.4);
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Question Card */
+    .question-card {
+      padding: 2rem;
+      border-radius: 1.25rem;
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(51, 65, 85, 0.6) 100%);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      margin-bottom: 2rem;
+    }
+
+    .category-tag {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      border-radius: 0.625rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, rgba(79, 70, 229, 0.2), rgba(79, 70, 229, 0.1));
+      color: #818cf8;
+      border: 1px solid rgba(79, 70, 229, 0.2);
+      margin-bottom: 1.5rem;
+    }
+
+    .question-text {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1.6;
+      margin: 0 0 1.5rem;
+    }
+
+    /* Options */
+    .options-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .option-label {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      border-radius: 0.875rem;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .option-label:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .option-label.selected {
+      background: rgba(79, 70, 229, 0.12);
+      border-color: rgba(79, 70, 229, 0.5);
+    }
+
+    .radio-circle {
+      width: 1.25rem;
+      height: 1.25rem;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .radio-circle.selected {
+      border-color: #818cf8;
+      background: rgba(79, 70, 229, 0.3);
+      box-shadow: inset 0 0 4px rgba(129, 140, 248, 0.5);
+    }
+
+    .radio-circle.selected::after {
+      content: '';
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: 50%;
+      background: #818cf8;
+    }
+
+    .option-content {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex: 1;
+    }
+
+    .option-letter {
+      width: 1.75rem;
+      height: 1.75rem;
+      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.06);
+      color: rgba(255, 255, 255, 0.5);
+      flex-shrink: 0;
+    }
+
+    .option-text {
+      color: #ffffff;
+      font-size: 0.95rem;
+    }
+
+    /* Navigation Controls */
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .nav-btn {
+      padding: 0.65rem 1.25rem;
+      border-radius: 0.75rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.06);
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .nav-btn:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .question-dots {
+      display: none;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 300px;
+    }
+
+    @media (min-width: 768px) {
+      .question-dots {
+        display: flex;
+      }
+    }
+
+    .dot {
+      width: 1.75rem;
+      height: 1.75rem;
+      border-radius: 0.375rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.06);
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .dot:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .dot.current {
+      background: rgba(79, 70, 229, 0.5);
+      color: #ffffff;
+      border-color: rgba(79, 70, 229, 0.5);
+    }
+
+    .dot.answered {
+      background: rgba(34, 197, 94, 0.2);
+      color: #4ade80;
+      border-color: rgba(34, 197, 94, 0.3);
+    }
+
+    .nav-right {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .nav-next {
+      background: rgba(79, 70, 229, 0.4);
+      border-color: rgba(79, 70, 229, 0.4);
+    }
+
+    .nav-next:hover {
+      background: rgba(79, 70, 229, 0.6);
+      border-color: rgba(79, 70, 229, 0.6);
+    }
+
+    .submit-btn {
+      padding: 0.65rem 1.5rem;
+      border: none;
+      border-radius: 0.75rem;
+      background: linear-gradient(135deg, #16a34a, #22c55e);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 16px rgba(34, 197, 94, 0.3);
+      white-space: nowrap;
+    }
+
+    .submit-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(34, 197, 94, 0.4);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* Submitting State */
+    .submitting-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 6rem 2rem;
+    }
+
+    .submitting-text {
+      color: #ffffff;
+      font-weight: 600;
+      margin-top: 1rem;
+    }
+
+    /* Result Card */
+    .result-card {
+      padding: 2rem;
+      border-radius: 1.25rem;
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(51, 65, 85, 0.6) 100%);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      animation: slideUp 0.4s ease-out;
+    }
+
+    .result-emoji {
+      font-size: 5rem;
+      margin-bottom: 1.5rem;
+      display: block;
+    }
+
+    .result-emoji.passed {
+      animation: bounce 0.6s ease-out;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+
+    .result-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin: 0 0 0.75rem;
+    }
+
+    .result-message {
+      color: var(--color-text-muted);
+      margin: 0 0 2rem;
+      font-size: 0.95rem;
+    }
+
+    /* Score Display */
+    .score-display {
+      display: inline-flex;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 1.5rem 2rem;
+      border-radius: 1rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      margin-bottom: 1.5rem;
+    }
+
+    .score-item {
+      text-align: center;
+    }
+
+    .score-number {
+      font-size: 2.25rem;
+      font-weight: 900;
+      color: #ffffff;
+      line-height: 1;
+      margin-bottom: 0.375rem;
+    }
+
+    .score-number.passed {
+      color: #4ade80;
+    }
+
+    .score-label {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin: 0;
+    }
+
+    .score-divider {
+      font-size: 1.5rem;
+      color: var(--color-text-muted);
+    }
+
+    .score-divider-vertical {
+      width: 1px;
+      height: 60px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Result Badge */
+    .result-badge {
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05));
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      margin-bottom: 1.5rem;
+    }
+
+    .result-badge.passed {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.05));
+      color: #4ade80;
+      border-color: rgba(34, 197, 94, 0.25);
+    }
+
+    /* Result Actions */
+    .result-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .action-btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 0.75rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: inline-block;
+    }
+
+    .action-btn.retry-btn {
+      background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+    }
+
+    .action-btn.retry-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(79, 70, 229, 0.3);
+    }
+
+    .action-btn.back-btn {
+      background: rgba(255, 255, 255, 0.06);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .action-btn.back-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    @media (max-width: 768px) {
+      .exam-container {
+        padding: 1rem;
+      }
+
+      .exam-header {
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .question-card {
+        padding: 1.5rem;
+      }
+
+      .score-display {
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .score-divider-vertical {
+        width: 100%;
+        height: 1px;
+      }
+
+      .nav-controls {
+        flex-direction: column;
+      }
+
+      .nav-right {
+        width: 100%;
+        flex-direction: column;
+      }
+
+      .nav-btn,
+      .submit-btn {
+        width: 100%;
+      }
+    }
+  `]
 })
 export class TheoreticalExamComponent implements OnInit {
   phase: ExamPhase = 'loading';

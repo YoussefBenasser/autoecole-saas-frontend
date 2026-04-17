@@ -21,6 +21,7 @@ interface Student {
   };
   firstName?: string;
   lastName?: string;
+  telephone?: string;
   level?: string;
 }
 
@@ -118,7 +119,7 @@ interface Student {
               <td class="user-name">{{ s.user?.lastName || s.lastName || '—' }}</td>
               <td class="text-muted">{{ s.tenantName || '—' }}</td>
               <td class="text-muted">{{ s.user?.email || '—' }}</td>
-              <td class="text-muted">{{ s.user?.telephone || '—' }}</td>
+              <td class="text-muted">{{ s.telephone || s.user?.telephone || '—' }}</td>
               <td>
                 <span class="level-badge" [ngClass]="getLevelClass(s.level)">
                   {{ s.level || 'Non défini' }}
@@ -468,7 +469,8 @@ export class StudentsComponent implements OnInit {
       (s.user?.name || '').toLowerCase().includes(term) ||
       (s.user?.firstName || '').toLowerCase().includes(term) ||
       (s.user?.lastName || '').toLowerCase().includes(term) ||
-      (s.user?.email || '').toLowerCase().includes(term)
+      (s.user?.email || '').toLowerCase().includes(term) ||
+      (s.telephone || s.user?.telephone || '').toLowerCase().includes(term)
     );
   }
 
