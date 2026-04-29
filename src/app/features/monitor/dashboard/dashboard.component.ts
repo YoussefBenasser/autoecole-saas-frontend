@@ -5,19 +5,30 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { SessionResponse as Session } from '../../../core/models/session.model';
 
-interface StudentInfo {
-  id: string;
-  user?: { firstName?: string; lastName?: string; };
-  firstName?: string;
-  lastName?: string;
-}
-
 @Component({
   selector: 'app-monitor-dashboard',
   standalone: true,
   imports: [CommonModule, RouterModule],
+  styleUrls: ['../../tenant/dashboard/dashboard.component.css'],
   template: `
-    <div class="relative">
+    <div class="dashboard-container relative">
+      <div class="header">
+        <div class="header-content">
+          <div>
+            <h1 class="header-title">Bonjour !</h1>
+            <p class="header-subtitle">Aperçu de votre planning de conduite.</p>
+          </div>
+          <div class="header-actions">
+            <div class="date-display">
+              <svg class="calendar-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span class="current-date">{{ today }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div *ngIf="isLoading" class="flex justify-center py-20">
         <svg class="w-8 h-8 animate-spin" style="color: var(--color-accent)" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -26,98 +37,92 @@ interface StudentInfo {
       </div>
 
       <div *ngIf="!isLoading">
-        <div class="mb-6 flex items-center justify-between">
-          <div>
-            <h1 class="text-2xl font-bold text-white">Bonjour !</h1>
-            <p class="text-sm mt-1" style="color: var(--color-text-muted)">Aperçu de votre planning de conduite.</p>
-          </div>
-          <div class="hidden sm:block">
-            <p class="text-xs font-medium uppercase tracking-wide px-3 py-1.5 rounded-full" style="background: rgba(79,70,229,0.15); color: #818cf8">Moniteur</p>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="stats-overview">
           <!-- Next Session Card -->
-          <div class="rounded-2xl p-6 border hover:border-teal-500/30 transition-all" style="background: var(--color-surface); border-color: var(--color-border)">
-            <div class="flex items-center gap-4 mb-4">
-              <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style="background: rgba(20,184,166,0.15)">🕒</div>
-              <h3 class="font-semibold text-white">Prochaine séance</h3>
+          <div class="stat-card" style="cursor: default;">
+            <div class="stat-header">
+              <div class="stat-icon" style="background: rgba(20,184,166,0.15)">🕒</div>
+              <h3 class="stat-title">Prochaine séance</h3>
             </div>
             <div *ngIf="nextSession">
-              <p class="text-xl font-bold text-white mb-1">{{ nextSession.sessionDate | date:'dd/MM/yyyy' }}</p>
-              <p class="text-sm" style="color: var(--color-text-muted)">{{ nextSession.startTime }} - {{ nextSession.endTime }}</p>
-              <p class="text-sm mt-2" style="color: var(--color-text-muted)" *ngIf="getStudentNames(nextSession).length > 0">
-                Avec : <span class="text-white font-medium">{{ getStudentNames(nextSession).join(', ') }}</span>
+              <p class="stat-value" style="font-size: 2rem;">{{ nextSession.sessionDate | date:'dd/MM/yyyy' }}</p>
+              <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem; margin-top: 0.5rem;">{{ nextSession.startTime }} - {{ nextSession.endTime }}</p>
+              <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem; margin-top: 0.25rem;" *ngIf="getStudentNames(nextSession).length > 0">
+                Avec : <span style="color: white; font-weight: 500;">{{ getStudentNames(nextSession).join(', ') }}</span>
               </p>
             </div>
-            <p *ngIf="!nextSession" class="text-sm italic" style="color: var(--color-text-muted)">Aucune séance planifiée.</p>
-            <div class="mt-4 pt-4 border-t" style="border-color: var(--color-border)">
-              <a routerLink="/monitor/sessions" class="text-sm font-medium flex items-center gap-1 hover:opacity-80 transition-opacity" style="color: #2dd4bf">
+            <p *ngIf="!nextSession" style="color: rgba(255,255,255,0.6); font-size: 0.9rem; font-style: italic;">Aucune séance planifiée.</p>
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+              <a routerLink="/monitor/sessions" style="color: #2dd4bf; font-size: 0.9rem; font-weight: 500; text-decoration: none; display: flex; align-items: center; gap: 0.25rem;">
                 Voir le planning <span>→</span>
               </a>
             </div>
           </div>
 
           <!-- Stats Card -->
-          <div class="rounded-2xl p-6 border hover:border-orange-500/30 transition-all" style="background: var(--color-surface); border-color: var(--color-border)">
-            <div class="flex items-center gap-4 mb-4">
-              <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style="background: rgba(249,115,22,0.15)">🚗</div>
-              <h3 class="font-semibold text-white">Mes Séances</h3>
+          <div class="stat-card" style="cursor: default;">
+            <div class="stat-header">
+              <div class="stat-icon" style="background: rgba(249,115,22,0.15)">🚗</div>
+              <h3 class="stat-title">Mes Séances</h3>
             </div>
-            <p class="text-xl font-bold text-white mb-1">{{ totalSessions }} séance(s)</p>
-            <p class="text-sm" style="color: var(--color-text-muted)">{{ upcomingSessions }} à venir · {{ completedSessions }} terminée(s)</p>
+            <p class="stat-value" style="font-size: 2.5rem;">{{ totalSessions }}</p>
+            <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem; margin-top: 0.5rem;">{{ upcomingSessions }} à venir · {{ completedSessions }} terminée(s)</p>
 
             <!-- Mini stats grid -->
-            <div class="mt-4 grid grid-cols-3 gap-2">
-              <div class="rounded-xl p-2 text-center" style="background: rgba(56,189,248,0.08)">
-                <p class="text-lg font-bold text-white">{{ upcomingSessions }}</p>
-                <p class="text-xs" style="color: var(--color-text-muted)">À venir</p>
+            <div style="margin-top: 1rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
+              <div style="border-radius: 0.75rem; padding: 0.5rem; text-align: center; background: rgba(56,189,248,0.08);">
+                <p style="font-size: 1.125rem; font-weight: 700; color: white; margin: 0;">{{ upcomingSessions }}</p>
+                <p style="font-size: 0.75rem; color: rgba(255,255,255,0.6); margin: 0;">À venir</p>
               </div>
-              <div class="rounded-xl p-2 text-center" style="background: rgba(34,197,94,0.08)">
-                <p class="text-lg font-bold text-white">{{ completedSessions }}</p>
-                <p class="text-xs" style="color: var(--color-text-muted)">Terminées</p>
+              <div style="border-radius: 0.75rem; padding: 0.5rem; text-align: center; background: rgba(34,197,94,0.08);">
+                <p style="font-size: 1.125rem; font-weight: 700; color: white; margin: 0;">{{ completedSessions }}</p>
+                <p style="font-size: 0.75rem; color: rgba(255,255,255,0.6); margin: 0;">Terminées</p>
               </div>
-              <div class="rounded-xl p-2 text-center" style="background: rgba(239,68,68,0.08)">
-                <p class="text-lg font-bold text-white">{{ cancelledSessions }}</p>
-                <p class="text-xs" style="color: var(--color-text-muted)">Annulées</p>
+              <div style="border-radius: 0.75rem; padding: 0.5rem; text-align: center; background: rgba(239,68,68,0.08);">
+                <p style="font-size: 1.125rem; font-weight: 700; color: white; margin: 0;">{{ cancelledSessions }}</p>
+                <p style="font-size: 0.75rem; color: rgba(255,255,255,0.6); margin: 0;">Annulées</p>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Upcoming Sessions List -->
-        <div *ngIf="upcomingSessionsList.length > 0" class="rounded-2xl overflow-hidden border" style="background: var(--color-surface); border-color: var(--color-border)">
-          <div class="px-6 py-4 border-b flex items-center justify-between" style="border-color: var(--color-border); background: var(--color-surface-2)">
-            <h2 class="font-bold text-white">Séances à venir</h2>
-            <a routerLink="/monitor/sessions" class="text-xs font-medium hover:opacity-80" style="color: #2dd4bf">Voir tout →</a>
+        <div *ngIf="upcomingSessionsList.length > 0" class="recent-tenants">
+          <div class="section-header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <h2 class="section-title">Séances à venir</h2>
+              <a routerLink="/monitor/sessions" style="color:#2dd4bf; text-decoration:none; font-size:0.95rem; font-weight:600;">Voir tout →</a>
+            </div>
           </div>
-          <table class="w-full text-sm">
-            <thead>
-              <tr style="background: var(--color-surface-2)">
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider" style="color: var(--color-text-muted)">Date & Heure</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider" style="color: var(--color-text-muted)">Élève(s)</th>
-                <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider" style="color: var(--color-text-muted)">Statut</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let s of upcomingSessionsList.slice(0, 5)" class="border-t hover:bg-white/5 transition-colors" style="border-color: var(--color-border)">
-                <td class="px-5 py-4">
-                  <div class="font-medium text-white">{{ s.sessionDate | date:'dd/MM/yyyy' }}</div>
-                  <div class="text-xs mt-0.5" style="color: var(--color-text-muted)">{{ formatTime(s.startTime) }} – {{ formatTime(s.endTime) }}</div>
-                </td>
-                <td class="px-5 py-4" style="color: var(--color-text-muted)">
-                  <span *ngIf="getStudentNames(s).length > 0" class="text-white">{{ getStudentNames(s).join(', ') }}</span>
-                <span *ngIf="getStudentNames(s).length === 0 && (s.studentIds || []).length > 0">{{ (s.studentIds || []).length }} élève(s)</span>
-                  <span *ngIf="!s.studentIds || s.studentIds.length === 0" class="opacity-40">—</span>
-                </td>
-                <td class="px-5 py-4">
-                  <span class="px-2 py-1 rounded-full text-xs font-medium" style="background: rgba(56,189,248,0.15); color: #38bdf8">
-                    ⏳ Planifiée
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div style="padding: 0;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+              <thead>
+                <tr>
+                  <th style="padding: 1rem 2rem; font-weight: 600; color: rgba(255, 255, 255, 0.9); background: rgba(255, 255, 255, 0.05); font-size: 0.9rem; text-transform: uppercase;">Date & Heure</th>
+                  <th style="padding: 1rem 2rem; font-weight: 600; color: rgba(255, 255, 255, 0.9); background: rgba(255, 255, 255, 0.05); font-size: 0.9rem; text-transform: uppercase;">Élève(s)</th>
+                  <th style="padding: 1rem 2rem; font-weight: 600; color: rgba(255, 255, 255, 0.9); background: rgba(255, 255, 255, 0.05); font-size: 0.9rem; text-transform: uppercase;">Statut</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let s of upcomingSessionsList.slice(0, 5)" style="border-top: 1px solid rgba(255, 255, 255, 0.08); transition: all 0.2s ease;">
+                  <td style="padding: 1rem 2rem;">
+                    <div style="font-weight: 600; color: white;">{{ s.sessionDate | date:'dd/MM/yyyy' }}</div>
+                    <div style="font-size: 0.85rem; color: rgba(255,255,255,0.7); margin-top: 0.25rem;">{{ formatTime(s.startTime) }} – {{ formatTime(s.endTime) }}</div>
+                  </td>
+                  <td style="padding: 1rem 2rem; color: rgba(255, 255, 255, 0.9); font-size: 0.9rem;">
+                    <span *ngIf="getStudentNames(s).length > 0">{{ getStudentNames(s).join(', ') }}</span>
+                    <span *ngIf="getStudentNames(s).length === 0 && (s.studentIds || []).length > 0">{{ (s.studentIds || []).length }} élève(s)</span>
+                    <span *ngIf="!s.studentIds || s.studentIds.length === 0" style="opacity: 0.5">—</span>
+                  </td>
+                  <td style="padding: 1rem 2rem;">
+                    <span class="status-badge" style="background: rgba(56,189,248,0.2); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3);">
+                      ⏳ Planifiée
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -131,8 +136,8 @@ export class DashboardComponent implements OnInit {
   completedSessions = 0;
   cancelledSessions = 0;
   upcomingSessionsList: Session[] = [];
-  studentMap: Map<string, string> = new Map();
   isLoading = true;
+  today = new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
   constructor(private http: HttpClient) {}
 
@@ -175,35 +180,17 @@ export class DashboardComponent implements OnInit {
         this.nextSession = sorted[0] || null;
         this.upcomingSessionsList = sorted;
         this.isLoading = false;
-
-        // Load student info for name display
-        const studentIds = new Set<string>();
-        sessions.forEach(s => (s.studentIds || []).forEach(id => studentIds.add(id)));
-        if (studentIds.size > 0) {
-          this.loadStudentNames(Array.from(studentIds));
-        }
       },
       error: () => this.isLoading = false
     });
   }
 
-  loadStudentNames(ids: string[]) {
-    this.http.get<StudentInfo[]>(`${environment.apiUrl}/admin/students`).subscribe({
-      next: (students) => {
-        students.forEach(s => {
-          const first = s.user?.firstName || s.firstName || '';
-          const last = s.user?.lastName || s.lastName || '';
-          const name = `${first} ${last}`.trim();
-          this.studentMap.set(s.id, name || s.id.substring(0, 8));
-        });
-      },
-      error: () => {}
-    });
-  }
-
   getStudentNames(session: Session): string[] {
-    if (!session.studentIds || session.studentIds.length === 0) return [];
-    return session.studentIds.map(id => this.studentMap.get(id) || id.substring(0, 8) + '…');
+    // Use studentNames returned directly from the backend API
+    if (session.studentNames && session.studentNames.length > 0) {
+      return session.studentNames.filter(n => n && n.trim().length > 0);
+    }
+    return [];
   }
 
   formatTime(timeStr: string): string {

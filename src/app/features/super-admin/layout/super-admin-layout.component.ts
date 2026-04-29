@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -126,9 +126,7 @@ import { AuthService } from '../../../core/services/auth.service';
         display: block;
         height: 100vh;
         overflow: hidden;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        background: linear-gradient(135deg, rgba(18, 27, 50, 0.9), rgba(10, 12, 25, 0.9)),
-          url('https://templatemo.com/templates/templatemo_583_festava_live/assets/images/slide-01.jpg') center/cover no-repeat;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
         color: #ffffff;
       }
 
@@ -136,6 +134,18 @@ import { AuthService } from '../../../core/services/auth.service';
         display: flex;
         height: 100vh;
         overflow: hidden;
+        background-color: #020617;
+        background-image: 
+          radial-gradient(
+            600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+            rgba(56, 189, 248, 0.15),
+            transparent 40%
+          ),
+          linear-gradient(rgba(15, 23, 42, 0.2), rgba(15, 23, 42, 0.5)),
+          url('../../../../assets/images/super.jpg');
+        background-size: auto, cover, cover;
+        background-position: center, center, center;
+        background-attachment: fixed;
       }
 
       /* Sidebar Styles */
@@ -164,12 +174,12 @@ import { AuthService } from '../../../core/services/auth.service';
         width: 48px;
         height: 48px;
         border-radius: 14px;
-        background: linear-gradient(135deg, #ff7a6c 0%, #ffb86c 100%);
+        background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
         display: flex;
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
-        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+        box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
       }
 
       .logo-icon svg {
@@ -186,7 +196,7 @@ import { AuthService } from '../../../core/services/auth.service';
         font-size: 1.25rem;
         font-weight: 800;
         margin: 0 0 0.25rem 0;
-        background: linear-gradient(135deg, #ff7a6c 0%, #ffb86c 100%);
+        background: linear-gradient(135deg, #38bdf8 0%, #3b82f6 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -241,7 +251,7 @@ import { AuthService } from '../../../core/services/auth.service';
         transform: translateY(-50%);
         width: 4px;
         height: 60%;
-        background: linear-gradient(135deg, #ff7a6c 0%, #ffb86c 100%);
+        background: linear-gradient(135deg, #38bdf8 0%, #3b82f6 100%);
         border-radius: 0 2px 2px 0;
       }
 
@@ -283,13 +293,13 @@ import { AuthService } from '../../../core/services/auth.service';
         width: 40px;
         height: 40px;
         border-radius: 10px;
-        background: linear-gradient(135deg, #ff7a6c 0%, #ffb86c 100%);
+        background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: 700;
         font-size: 0.875rem;
-        color: #1a1a1a;
+        color: #ffffff;
         flex-shrink: 0;
       }
 
@@ -323,8 +333,8 @@ import { AuthService } from '../../../core/services/auth.service';
         padding: 0.875rem 1rem;
         border-radius: 12px;
         border: none;
-        background: rgba(255, 120, 110, 0.1);
-        color: #ff7a6c;
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
         font-weight: 600;
         font-size: 0.9rem;
         cursor: pointer;
@@ -332,8 +342,8 @@ import { AuthService } from '../../../core/services/auth.service';
       }
 
       .logout-button:hover {
-        background: rgba(255, 120, 110, 0.2);
-        color: #ffb86c;
+        background: rgba(239, 68, 68, 0.15);
+        color: #f87171;
         transform: translateY(-1px);
       }
 
@@ -525,9 +535,15 @@ export class SuperAdminLayoutComponent {
   email = '';
   initials = '';
 
-  constructor(private authService: AuthService) {
+  constructor(private authService: AuthService, private el: ElementRef) {
     this.email = this.authService.getEmail() || 'admin@system.com';
     this.initials = this.email.substring(0, 2).toUpperCase();
+  }
+
+  @HostListener('mousemove', ['$event'])
+  onMouseMove(event: MouseEvent) {
+    this.el.nativeElement.style.setProperty('--mouse-x', `${event.clientX}px`);
+    this.el.nativeElement.style.setProperty('--mouse-y', `${event.clientY}px`);
   }
 
   logout(): void {

@@ -7,7 +7,9 @@ import { environment } from '../../../../environments/environment';
 interface SessionItem {
   id: string;
   monitorId: string;
+  monitorName?: string;
   studentIds: string[];
+  studentNames?: string[];
   sessionDate: string;
   startTime: string;
   endTime: string;
@@ -20,21 +22,22 @@ interface SessionItem {
   selector: 'app-monitor-sessions',
   standalone: true,
   imports: [CommonModule, FormsModule],
+  styleUrls: ['../../tenant/dashboard/dashboard.component.css'],
   template: `
-    <div class="relative min-h-[500px]">
+    <div class="dashboard-container relative min-h-[500px]">
       <!-- Header -->
-      <div class="flex items-center justify-between mb-6">
-        <div>
-          <h1 class="text-2xl font-bold text-white">Mon Planning</h1>
-          <p class="text-sm mt-1" style="color: var(--color-text-muted)">
-            Vos séances de conduite assignées. Total : <strong class="text-white">{{ sessions.length }}</strong>
-          </p>
+      <div class="header">
+        <div class="header-content">
+          <div>
+            <h1 class="header-title">Mon Planning</h1>
+            <p class="header-subtitle">Vos séances de conduite assignées. Total : <strong>{{ sessions.length }}</strong></p>
+          </div>
+          <div class="header-actions">
+            <button (click)="refreshSessions()" class="refresh-button" title="Actualiser">
+              <span class="refresh-text">🔄 Actualiser</span>
+            </button>
+          </div>
         </div>
-        <button (click)="refreshSessions()" title="Actualiser"
-                class="px-3 py-2 rounded-xl text-sm font-medium flex items-center gap-2 transition-all"
-                style="background: rgba(20,184,166,0.12); color: #2dd4bf; border: 1px solid rgba(20,184,166,0.2);">
-          🔄 Actualiser
-        </button>
       </div>
 
       <!-- Filters -->
@@ -76,75 +79,75 @@ interface SessionItem {
       </div>
 
       <!-- Table -->
-      <div *ngIf="!isLoading && filteredSessions.length > 0"
-           class="rounded-2xl overflow-hidden border" style="background: var(--color-surface); border-color: var(--color-border)">
-        <table class="w-full text-sm">
-          <thead>
-            <tr style="background: var(--color-surface-2)">
-              <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider" style="color: var(--color-text-muted)">Date &amp; Heure</th>
-              <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider" style="color: var(--color-text-muted)">Type</th>
-              <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider" style="color: var(--color-text-muted)">Élève(s)</th>
-              <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider" style="color: var(--color-text-muted)">Statut</th>
-              <th class="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider" style="color: var(--color-text-muted)">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let s of filteredSessions"
-                class="border-t hover:bg-white/5 transition-colors"
-                style="border-color: var(--color-border)">
-              <!-- Date & Time -->
-              <td class="px-5 py-4">
-                <div class="font-medium text-white">{{ formatDate(s.sessionDate) }}</div>
-                <div class="text-xs mt-0.5" style="color: var(--color-text-muted)">
-                  {{ formatTime(s.startTime) }} – {{ formatTime(s.endTime) }}
-                </div>
-              </td>
-              <!-- Type -->
-              <td class="px-5 py-4">
-                <span class="px-2 py-1 rounded-full text-xs font-medium"
-                      [ngStyle]="s.type === 'théorie'
-                        ? {'background':'rgba(168,85,247,0.15)','color':'#c084fc'}
-                        : {'background':'rgba(20,184,166,0.15)','color':'#2dd4bf'}">
-                  {{ s.type === 'théorie' ? '📖 Théorie' : '🚗 Pratique' }}
-                </span>
-              </td>
-              <!-- Student IDs -->
-              <td class="px-5 py-4" style="color: var(--color-text-muted)">
-                <div *ngIf="s.studentIds && s.studentIds.length > 0" class="flex flex-wrap gap-1">
-                  <span *ngFor="let id of s.studentIds"
-                        class="px-2 py-0.5 rounded text-xs font-mono"
-                        style="background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7)">
-                    {{ id.substring(0, 8) }}…
+      <div *ngIf="!isLoading && filteredSessions.length > 0" class="recent-tenants" style="margin-top: 2rem;">
+        <div class="section-header">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 class="section-title">Liste des séances</h2>
+            <span class="status-badge approved">
+              {{ filteredSessions.length }} résultat(s)
+            </span>
+          </div>
+        </div>
+        <div style="padding: 0;">
+          <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead>
+              <tr>
+                <th style="padding: 1rem 2rem; font-weight: 600; color: rgba(255, 255, 255, 0.9); background: rgba(255, 255, 255, 0.05); font-size: 0.9rem; text-transform: uppercase;">Date &amp; Heure</th>
+                <th style="padding: 1rem 2rem; font-weight: 600; color: rgba(255, 255, 255, 0.9); background: rgba(255, 255, 255, 0.05); font-size: 0.9rem; text-transform: uppercase;">Type</th>
+                <th style="padding: 1rem 2rem; font-weight: 600; color: rgba(255, 255, 255, 0.9); background: rgba(255, 255, 255, 0.05); font-size: 0.9rem; text-transform: uppercase;">Élève(s)</th>
+                <th style="padding: 1rem 2rem; font-weight: 600; color: rgba(255, 255, 255, 0.9); background: rgba(255, 255, 255, 0.05); font-size: 0.9rem; text-transform: uppercase;">Statut</th>
+                <th style="padding: 1rem 2rem; font-weight: 600; color: rgba(255, 255, 255, 0.9); background: rgba(255, 255, 255, 0.05); font-size: 0.9rem; text-transform: uppercase;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let s of filteredSessions" style="border-top: 1px solid rgba(255, 255, 255, 0.08); transition: all 0.2s ease;">
+                <!-- Date & Time -->
+                <td style="padding: 1rem 2rem;">
+                  <div style="font-weight: 600; color: white;">{{ formatDate(s.sessionDate) }}</div>
+                  <div style="font-size: 0.85rem; color: rgba(255,255,255,0.7); margin-top: 0.25rem;">
+                    {{ formatTime(s.startTime) }} – {{ formatTime(s.endTime) }}
+                  </div>
+                </td>
+                <!-- Type -->
+                <td style="padding: 1rem 2rem;">
+                  <span class="status-badge"
+                        [ngClass]="s.type === 'théorie' ? 'pending' : 'approved'">
+                    {{ s.type === 'théorie' ? '📖 Théorie' : '🚗 Pratique' }}
                   </span>
-                </div>
-                <span *ngIf="!s.studentIds || s.studentIds.length === 0" class="text-white/30">—</span>
-              </td>
-              <!-- Status badge -->
-              <td class="px-5 py-4">
-                <span class="px-2 py-1.5 rounded-full text-xs font-medium"
-                      [ngStyle]="getStatusStyle(s.status)">
-                  {{ getStatusLabel(s.status) }}
-                </span>
-              </td>
-              <!-- Actions -->
-              <td class="px-5 py-4">
-                <div *ngIf="s.status === 'PLANNED'" class="flex gap-2">
-                  <button (click)="acceptSession(s)"
-                          class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:scale-105"
-                          style="background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.25);">
-                    ✅ Accepter
-                  </button>
-                  <button (click)="rejectSession(s)"
-                          class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:scale-105"
-                          style="background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.25);">
-                    ❌ Refuser
-                  </button>
-                </div>
-                <span *ngIf="s.status !== 'PLANNED'" class="text-xs" style="color: var(--color-text-muted)">—</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                </td>
+                <!-- Student IDs -->
+                <td style="padding: 1rem 2rem; color: rgba(255, 255, 255, 0.9); font-size: 0.9rem;">
+                  <span *ngIf="getStudentNamesList(s).length > 0">{{ getStudentNamesList(s).join(', ') }}</span>
+                  <span *ngIf="getStudentNamesList(s).length === 0 && s.studentIds && s.studentIds.length > 0">{{ s.studentIds.length }} élève(s)</span>
+                  <span *ngIf="!s.studentIds || s.studentIds.length === 0" style="opacity: 0.4;">—</span>
+                </td>
+                <!-- Status badge -->
+                <td style="padding: 1rem 2rem;">
+                  <span class="status-badge"
+                        [ngStyle]="getStatusStyle(s.status)">
+                    {{ getStatusLabel(s.status) }}
+                  </span>
+                </td>
+                <!-- Actions -->
+                <td style="padding: 1rem 2rem;">
+                  <div *ngIf="s.status === 'PLANNED'" class="flex gap-2">
+                    <button (click)="acceptSession(s)"
+                            class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:scale-105"
+                            style="background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.25);">
+                      ✅ Accepter
+                    </button>
+                    <button (click)="rejectSession(s)"
+                            class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:scale-105"
+                            style="background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.25);">
+                      ❌ Refuser
+                    </button>
+                  </div>
+                  <span *ngIf="s.status !== 'PLANNED'" class="text-xs" style="color: var(--color-text-muted)">—</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <!-- Empty state — no sessions at all -->
@@ -294,5 +297,12 @@ export class SessionsComponent implements OnInit {
       case 'CANCELLED': return '❌ Refusée';
       default: return '⏳ En attente';
     }
+  }
+
+  getStudentNamesList(session: SessionItem): string[] {
+    if (session.studentNames && session.studentNames.length > 0) {
+      return session.studentNames.filter(n => n && n.trim().length > 0);
+    }
+    return [];
   }
 }

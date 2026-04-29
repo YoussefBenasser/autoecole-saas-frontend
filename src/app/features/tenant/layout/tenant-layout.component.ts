@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -70,9 +70,7 @@ import { AuthService } from '../../../core/services/auth.service';
         display: block;
         height: 100vh;
         overflow: hidden;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        background: linear-gradient(135deg, rgba(18, 27, 50, 0.9), rgba(10, 12, 25, 0.9)),
-          url('https://templatemo.com/templates/templatemo_583_festava_live/assets/images/slide-01.jpg') center/cover no-repeat;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
         color: #ffffff;
       }
 
@@ -81,6 +79,18 @@ import { AuthService } from '../../../core/services/auth.service';
         flex-direction: column;
         height: 100vh;
         overflow: hidden;
+        background-color: #020617;
+        background-image: 
+          radial-gradient(
+            600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+            rgba(56, 189, 248, 0.15),
+            transparent 40%
+          ),
+          linear-gradient(rgba(15, 23, 42, 0.2), rgba(15, 23, 42, 0.5)),
+          url('../../../../assets/images/table.jpg');
+        background-size: auto, cover, cover;
+        background-position: center, center, center;
+        background-attachment: fixed;
       }
 
       /* Top Navbar Styles */
@@ -372,9 +382,15 @@ export class TenantLayoutComponent {
     { path: '/tenant/payments', label: 'Paiements', icon: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>' },
   ];
 
-  constructor(private authService: AuthService) {
+  constructor(private authService: AuthService, private el: ElementRef) {
     this.email = this.authService.getEmail() || 'tenant@ecole.com';
     this.initials = this.email.substring(0, 2).toUpperCase();
+  }
+
+  @HostListener('mousemove', ['$event'])
+  onMouseMove(event: MouseEvent) {
+    this.el.nativeElement.style.setProperty('--mouse-x', `${event.clientX}px`);
+    this.el.nativeElement.style.setProperty('--mouse-y', `${event.clientY}px`);
   }
 
   logout(): void {

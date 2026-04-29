@@ -1,7 +1,9 @@
 export interface SessionResponse {
   id: string;
   monitorId: string;
+  monitorName?: string;
   studentIds: string[];
+  studentNames?: string[];
   sessionDate: string;   // ISO date string e.g. "2026-01-12"
   startTime: string;     // Time string e.g. "14:00:00"
   endTime: string;       // Time string e.g. "15:00:00"

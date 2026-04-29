@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -69,9 +69,7 @@ import { AuthService } from '../../../core/services/auth.service';
         display: block;
         height: 100vh;
         overflow: hidden;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        background: linear-gradient(135deg, rgba(18, 27, 50, 0.9), rgba(10, 12, 25, 0.9)),
-          url('https://templatemo.com/templates/templatemo_583_festava_live/assets/images/slide-01.jpg') center/cover no-repeat;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
         color: #ffffff;
       }
 
@@ -80,6 +78,18 @@ import { AuthService } from '../../../core/services/auth.service';
         flex-direction: column;
         height: 100vh;
         overflow: hidden;
+        background-color: #020617;
+        background-image: 
+          radial-gradient(
+            600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), 
+            rgba(99, 102, 241, 0.15),
+            transparent 40%
+          ),
+          linear-gradient(rgba(15, 23, 42, 0.2), rgba(15, 23, 42, 0.5)),
+          url('../../../../assets/images/pass.jpg');
+        background-size: auto, cover, cover;
+        background-position: center, center, center;
+        background-attachment: fixed;
       }
 
       .top-navbar {
@@ -364,9 +374,15 @@ export class StudentLayoutComponent {
     { path: '/student/theoretical-exam', label: 'Examen Code', icon: '<svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>' },
   ];
 
-  constructor(private authService: AuthService) {
+  constructor(private authService: AuthService, private el: ElementRef) {
     this.email = this.authService.getEmail() || 'eleve@ecole.com';
     this.initials = this.email.substring(0, 2).toUpperCase();
+  }
+
+  @HostListener('mousemove', ['$event'])
+  onMouseMove(event: MouseEvent) {
+    this.el.nativeElement.style.setProperty('--mouse-x', `${event.clientX}px`);
+    this.el.nativeElement.style.setProperty('--mouse-y', `${event.clientY}px`);
   }
 
   logout(): void {

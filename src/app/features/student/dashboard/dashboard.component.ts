@@ -24,6 +24,15 @@ interface PaymentItem {
   studentName?: string;
 }
 
+interface MockTestItem {
+  id: string;
+  studentId: string;
+  score: number;
+  totalQuestions: number;
+  passed: boolean;
+  takenAt: string;
+}
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -103,6 +112,28 @@ interface PaymentItem {
               <p class="progress-note">Basé sur une estimation de 20 séances</p>
             </div>
           </div>
+
+          <!-- Mock Test Card -->
+          <div class="card mock-card">
+            <div class="card-header">
+              <div class="card-icon mock-icon">📝</div>
+              <h3 class="card-title">Examen Code</h3>
+            </div>
+            <div class="card-content">
+              <div *ngIf="mockTests.length > 0" class="mock-summary">
+                <p class="mock-last-score">Dernier : <strong>{{ mockTests[0].score }}/{{ mockTests[0].totalQuestions }}</strong></p>
+                <span class="mock-result-pill" [class.passed]="mockTests[0].passed" [class.failed]="!mockTests[0].passed">
+                  {{ mockTests[0].passed ? '✅ Admis' : '❌ Refusé' }}
+                </span>
+              </div>
+              <p *ngIf="mockTests.length === 0" class="empty-state">Aucun test passé.</p>
+            </div>
+            <div class="card-footer">
+              <a routerLink="/student/theoretical-exam" class="card-link mock-link">
+                Passer un test <span class="arrow">→</span>
+              </a>
+            </div>
+          </div>
         </div>
 
         <!-- Sessions list -->
@@ -146,6 +177,42 @@ interface PaymentItem {
           <div *ngIf="sessions.length === 0" class="sessions-empty">
             <p>Aucune séance enregistrée pour le moment.</p>
             <a routerLink="/student/sessions" class="sessions-empty-link">Voir le planning →</a>
+          </div>
+        </div>
+
+        <!-- Mock Tests History -->
+        <div *ngIf="mockTests.length > 0" class="mock-tests-section">
+          <div class="mock-tests-header">
+            <div class="header-left">
+              <div class="mock-tests-icon">📝</div>
+              <h2 class="mock-tests-title">Historique des Tests Code</h2>
+            </div>
+            <span class="mock-tests-badge">{{ mockTests.length }} test(s)</span>
+          </div>
+          <div class="mock-tests-table-wrapper">
+            <table class="mock-tests-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Score</th>
+                  <th>Résultat</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let t of mockTests" class="mock-test-row">
+                  <td class="mock-date-cell">{{ t.takenAt | date:'dd/MM/yyyy HH:mm' }}</td>
+                  <td class="mock-score-cell">
+                    <strong>{{ t.score }}</strong>/{{ t.totalQuestions }}
+                    <span class="mock-percent">({{ getTestPercent(t) }}%)</span>
+                  </td>
+                  <td>
+                    <span class="mock-result-badge" [class.passed]="t.passed" [class.failed]="!t.passed">
+                      {{ t.passed ? '✅ Admis' : '❌ Refusé' }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -291,6 +358,7 @@ interface PaymentItem {
     .session-icon { background: linear-gradient(135deg, rgba(79, 70, 229, 0.2) 0%, rgba(79, 70, 229, 0.1) 100%); }
     .exam-icon { background: linear-gradient(135deg, rgba(168, 85, 247, 0.2) 0%, rgba(168, 85, 247, 0.1) 100%); }
     .progress-icon { background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(34, 197, 94, 0.1) 100%); }
+    .mock-icon { background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(251, 191, 36, 0.1) 100%); }
 
     .card-title {
       font-size: 1.1rem;
@@ -365,6 +433,40 @@ interface PaymentItem {
 
     .session-link { color: #818cf8; }
     .exam-link { color: #c084fc; }
+    .mock-link { color: #fbbf24; }
+
+    /* Mock summary in card */
+    .mock-summary {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .mock-last-score {
+      font-size: 1rem;
+      color: #ffffff;
+      margin: 0;
+    }
+
+    .mock-result-pill, .mock-result-badge {
+      display: inline-flex;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .mock-result-pill.passed, .mock-result-badge.passed {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.05));
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+
+    .mock-result-pill.failed, .mock-result-badge.failed {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05));
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
 
     .card-link:hover {
       opacity: 1;
@@ -565,6 +667,108 @@ interface PaymentItem {
       opacity: 0.9;
     }
 
+    /* Mock Tests History */
+    .mock-tests-section {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(51, 65, 85, 0.6) 100%);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 1.25rem;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      margin-bottom: 2rem;
+      animation: slideUp 0.4s ease-out;
+    }
+
+    .mock-tests-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(135deg, rgba(51, 65, 85, 0.4) 0%, rgba(51, 65, 85, 0.2) 100%);
+    }
+
+    .mock-tests-icon {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 0.625rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(251, 191, 36, 0.1) 100%);
+    }
+
+    .mock-tests-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin: 0;
+      letter-spacing: 0.01em;
+    }
+
+    .mock-tests-badge {
+      font-size: 0.8rem;
+      padding: 0.5rem 1rem;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(251, 191, 36, 0.05) 100%);
+      color: #fbbf24;
+      font-weight: 600;
+    }
+
+    .mock-tests-table-wrapper {
+      overflow-x: auto;
+    }
+
+    .mock-tests-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+
+    .mock-tests-table thead {
+      background: rgba(51, 65, 85, 0.3);
+    }
+
+    .mock-tests-table th {
+      padding: 1rem 1.5rem;
+      text-align: left;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      font-size: 0.8rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .mock-test-row {
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      transition: background 0.2s ease;
+    }
+
+    .mock-test-row:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .mock-tests-table td {
+      padding: 1rem 1.5rem;
+      color: var(--color-text);
+    }
+
+    .mock-date-cell {
+      color: var(--color-text-muted);
+    }
+
+    .mock-score-cell {
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .mock-percent {
+      font-weight: 400;
+      color: var(--color-text-muted);
+      font-size: 0.85rem;
+    }
+
     /* Payments Section */
     .payments-section {
       background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(51, 65, 85, 0.6) 100%);
@@ -738,6 +942,7 @@ export class DashboardComponent implements OnInit {
   nextExam: ExamItem | null = null;
   sessionsCount = 0;
   payments: PaymentItem[] = [];
+  mockTests: MockTestItem[] = [];
   isLoading = true;
 
   constructor(private http: HttpClient) {}
@@ -761,9 +966,10 @@ export class DashboardComponent implements OnInit {
     forkJoin({
       sessions: this.http.get<SessionResponse[]>(`${environment.apiUrl}/student/sessions?studentId=${studentId}`).pipe(catchError(() => of([]))),
       exams: this.http.get<ExamItem[]>(`${environment.apiUrl}/exams/student/${studentId}`).pipe(catchError(() => of([]))),
-      payments: this.http.get<PaymentItem[]>(`${environment.apiUrl}/student/payments?studentId=${studentId}`).pipe(catchError(() => of([])))
+      payments: this.http.get<PaymentItem[]>(`${environment.apiUrl}/student/payments?studentId=${studentId}`).pipe(catchError(() => of([]))),
+      mockTests: this.http.get<MockTestItem[]>(`${environment.apiUrl}/student/mock-tests/student/${studentId}`).pipe(catchError(() => of([])))
     }).subscribe({
-      next: ({ sessions, exams, payments }) => {
+      next: ({ sessions, exams, payments, mockTests }) => {
         this.sessionsCount = sessions.length;
         this.sessions = [...sessions].sort((a, b) => {
           const dc = new Date(a.sessionDate + 'T00:00:00').getTime() - new Date(b.sessionDate + 'T00:00:00').getTime();
@@ -789,6 +995,9 @@ export class DashboardComponent implements OnInit {
         this.nextExam = upcomingExams[0] || null;
 
         this.payments = payments;
+        this.mockTests = (mockTests || []).sort((a: MockTestItem, b: MockTestItem) => 
+          new Date(b.takenAt).getTime() - new Date(a.takenAt).getTime()
+        );
         this.isLoading = false;
       },
       error: () => this.isLoading = false
@@ -815,5 +1024,10 @@ export class DashboardComponent implements OnInit {
       case 'CANCELLED': return 'Annulée';
       default: return status || '—';
     }
+  }
+
+  getTestPercent(test: MockTestItem): number {
+    if (!test.totalQuestions) return 0;
+    return Math.round((test.score / test.totalQuestions) * 100);
   }
 }

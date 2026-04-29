@@ -341,12 +341,12 @@ export class DashboardComponent implements OnInit {
 
   getAvatarBg(name: string): string {
     const colors = [
-      'linear-gradient(135deg, #ff7a6c 0%, #ffb86c 100%)',
-      'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
-      'linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)',
-      'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-      'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-      'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'
+      'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)', // Sky to Blue
+      'linear-gradient(135deg, #10b981 0%, #059669 100%)', // Emerald
+      'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)', // Violet
+      'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', // Amber
+      'linear-gradient(135deg, #ec4899 0%, #be185d 100%)', // Pink
+      'linear-gradient(135deg, #14b8a6 0%, #0f766e 100%)'  // Teal
     ];
     const index = (name?.charCodeAt(0) ?? 0) % colors.length;
     return colors[index];

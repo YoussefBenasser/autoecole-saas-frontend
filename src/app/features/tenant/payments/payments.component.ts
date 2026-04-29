@@ -30,17 +30,21 @@ interface Payment {
   selector: 'app-payments',
   standalone: true,
   imports: [CommonModule, FormsModule],
+  styleUrls: ['../dashboard/dashboard.component.css'],
   template: `
-    <div class="relative min-h-[500px]">
-      <div class="flex items-center justify-between mb-6">
-        <div>
-          <h1 class="text-2xl font-bold text-white">Paiements</h1>
-          <p class="text-sm mt-1" style="color: var(--color-text-muted)">Aperçu financier et encaissements</p>
+    <div class="dashboard-container relative min-h-[500px]">
+      <div class="header">
+        <div class="header-content">
+          <div>
+            <h1 class="header-title">Paiements</h1>
+            <p class="header-subtitle">Aperçu financier et encaissements</p>
+          </div>
+          <div class="header-actions">
+            <button (click)="openModal()" class="refresh-button">
+              <span class="refresh-text">+ Enregistrer un paiement</span>
+            </button>
+          </div>
         </div>
-        <button (click)="openModal()" class="px-4 py-2 rounded-lg font-medium text-white shadow-sm transition-transform hover:scale-105"
-                style="background: linear-gradient(135deg, #10b981, #059669)">
-          + Enregistrer un paiement
-        </button>
       </div>
 
       <div *ngIf="isLoading" class="flex justify-center py-20">
@@ -50,53 +54,41 @@ interface Payment {
         </svg>
       </div>
 
-      <div *ngIf="!isLoading && stats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div *ngIf="!isLoading && stats" class="stats-overview">
         <!-- Total Revenue -->
-        <div class="rounded-2xl p-6 border relative overflow-hidden group" style="background: var(--color-surface); border-color: var(--color-border)">
-          <div class="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300 pointer-events-none" style="background: linear-gradient(135deg, #22c55e, #10b981);"></div>
-          <div class="flex items-center gap-4 mb-4">
-            <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-sm" style="background: rgba(34,197,94,0.15)">💰</div>
-            <div>
-              <p class="text-sm font-medium" style="color: var(--color-text-muted)">Revenus Totaux</p>
-            </div>
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon" style="background: rgba(34,197,94,0.15)">💰</div>
+            <h3 class="stat-title">Revenus Totaux</h3>
           </div>
-          <p class="text-3xl font-bold text-white">{{ stats.totalRevenue | number }} DZD</p>
+          <p class="stat-value">{{ stats.totalRevenue | number }} DZD</p>
         </div>
 
         <!-- Number of Payments -->
-        <div class="rounded-2xl p-6 border relative overflow-hidden group" style="background: var(--color-surface); border-color: var(--color-border)">
-          <div class="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300 pointer-events-none" style="background: linear-gradient(135deg, #6366f1, #4f46e5);"></div>
-          <div class="flex items-center gap-4 mb-4">
-            <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-sm" style="background: rgba(99,102,241,0.15)">🧾</div>
-            <div>
-              <p class="text-sm font-medium" style="color: var(--color-text-muted)">Transactions</p>
-            </div>
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon" style="background: rgba(99,102,241,0.15)">🧾</div>
+            <h3 class="stat-title">Transactions</h3>
           </div>
-          <p class="text-3xl font-bold text-white">{{ stats.numberOfPayments | number }}</p>
+          <p class="stat-value">{{ stats.numberOfPayments | number }}</p>
         </div>
 
         <!-- Average Payment -->
-        <div class="rounded-2xl p-6 border relative overflow-hidden group" style="background: var(--color-surface); border-color: var(--color-border)">
-          <div class="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300 pointer-events-none" style="background: linear-gradient(135deg, #f59e0b, #d97706);"></div>
-          <div class="flex items-center gap-4 mb-4">
-            <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-sm" style="background: rgba(245,158,11,0.15)">📊</div>
-            <div>
-              <p class="text-sm font-medium" style="color: var(--color-text-muted)">Paiement Moyen</p>
-            </div>
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon" style="background: rgba(245,158,11,0.15)">📊</div>
+            <h3 class="stat-title">Paiement Moyen</h3>
           </div>
-          <p class="text-3xl font-bold text-white">{{ stats.averagePayment | number:'1.0-2' }} DZD</p>
+          <p class="stat-value">{{ stats.averagePayment | number:'1.0-2' }} DZD</p>
         </div>
 
         <!-- Fully Paid Students -->
-        <div class="rounded-2xl p-6 border relative overflow-hidden group" style="background: var(--color-surface); border-color: var(--color-border)">
-          <div class="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300 pointer-events-none" style="background: linear-gradient(135deg, #06b6d4, #0891b2);"></div>
-          <div class="flex items-center gap-4 mb-4">
-            <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-sm" style="background: rgba(6,182,212,0.15)">🎓</div>
-            <div>
-              <p class="text-sm font-medium" style="color: var(--color-text-muted)">Élèves à Jour</p>
-            </div>
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon" style="background: rgba(6,182,212,0.15)">🎓</div>
+            <h3 class="stat-title">Élèves à Jour</h3>
           </div>
-          <p class="text-3xl font-bold text-white">{{ stats.studentsFullyPaid | number }}</p>
+          <p class="stat-value">{{ stats.studentsFullyPaid | number }}</p>
         </div>
       </div>
 
@@ -105,41 +97,42 @@ interface Payment {
       </div>
 
       <!-- Payments List -->
-      <div *ngIf="!isLoading" class="rounded-2xl overflow-hidden border mt-8" style="background: var(--color-surface); border-color: var(--color-border)">
-        <div class="px-6 py-4 border-b flex items-center justify-between" style="border-color: var(--color-border); background: var(--color-surface-2)">
-          <h2 class="text-base font-bold text-white">Historique des paiements</h2>
-          <span class="text-xs px-2 py-1 rounded-full font-medium" style="background: rgba(16,185,129,0.15); color: #34d399">
-            {{ payments.length }} paiement(s)
-          </span>
+      <div *ngIf="!isLoading" class="recent-tenants" style="margin-top: 2rem;">
+        <div class="section-header">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 class="section-title">Historique des paiements</h2>
+            <span class="status-badge approved">
+              {{ payments.length }} paiement(s)
+            </span>
+          </div>
         </div>
-        <table class="w-full text-sm">
-          <thead>
-            <tr style="background: var(--color-surface-2)">
-              <th class="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider" style="color: var(--color-text-muted)">Élève</th>
-              <th class="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider" style="color: var(--color-text-muted)">Montant</th>
-              <th class="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider" style="color: var(--color-text-muted)">Date</th>
-              <th class="text-left px-6 py-3 text-xs font-semibold uppercase tracking-wider" style="color: var(--color-text-muted)">Statut</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let p of payments" class="border-t hover:bg-white/5 transition-colors" style="border-color: var(--color-border)">
-              <td class="px-6 py-4 text-white">{{ p.studentName || '—' }}</td>
-              <td class="px-6 py-4 font-semibold" style="color: #22c55e">{{ p.amount | number }} DZD</td>
-              <td class="px-6 py-4" style="color: var(--color-text-muted)">{{ p.date | date:'dd/MM/yyyy' }}</td>
-              <td class="px-6 py-4">
-                <span class="px-2 py-1 rounded-full text-xs font-medium"
-                      [ngStyle]="p.status === 'PAID' ? {'background':'rgba(34,197,94,0.15)','color':'#4ade80'} : {'background':'rgba(251,191,36,0.15)','color':'#fbbf24'}">
-                  {{ p.status === 'PAID' ? '✓ Payé' : '⏳ En attente' }}
-                </span>
-              </td>
-            </tr>
-            <tr *ngIf="payments.length === 0">
-              <td colspan="4" class="px-6 py-12 text-center" style="color: var(--color-text-muted)">
-                Aucun paiement enregistré.
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div style="padding: 0;">
+          <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead>
+              <tr>
+                <th style="padding: 1rem 2rem; font-weight: 600; color: rgba(255, 255, 255, 0.9); background: rgba(255, 255, 255, 0.05); font-size: 0.9rem; text-transform: uppercase;">Élève</th>
+                <th style="padding: 1rem 2rem; font-weight: 600; color: rgba(255, 255, 255, 0.9); background: rgba(255, 255, 255, 0.05); font-size: 0.9rem; text-transform: uppercase;">Montant</th>
+                <th style="padding: 1rem 2rem; font-weight: 600; color: rgba(255, 255, 255, 0.9); background: rgba(255, 255, 255, 0.05); font-size: 0.9rem; text-transform: uppercase;">Date</th>
+                <th style="padding: 1rem 2rem; font-weight: 600; color: rgba(255, 255, 255, 0.9); background: rgba(255, 255, 255, 0.05); font-size: 0.9rem; text-transform: uppercase;">Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of payments" style="border-top: 1px solid rgba(255, 255, 255, 0.08); transition: all 0.2s ease;">
+                <td style="padding: 1rem 2rem; color: rgba(255, 255, 255, 0.9); font-size: 0.9rem;">{{ p.studentName || '—' }}</td>
+                <td style="padding: 1rem 2rem; color: #22c55e; font-weight: 600; font-size: 0.9rem;">{{ p.amount | number }} DZD</td>
+                <td style="padding: 1rem 2rem; color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">{{ p.date | date:'dd/MM/yyyy' }}</td>
+                <td style="padding: 1rem 2rem;">
+                  <span class="status-badge" [ngClass]="p.status === 'PAID' ? 'approved' : 'pending'">
+                    {{ p.status === 'PAID' ? 'Payé' : 'En attente' }}
+                  </span>
+                </td>
+              </tr>
+              <tr *ngIf="payments.length === 0">
+                <td colspan="4" class="empty">Aucun paiement enregistré.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <!-- Record Payment Modal Overlay -->

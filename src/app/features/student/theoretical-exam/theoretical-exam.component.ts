@@ -14,7 +14,22 @@ interface Question {
   id: string;
   category: string;
   questionText: string;
+  imageUrl?: string;
+  difficulty?: string;
   options: QuestionOption[];
+}
+
+interface AnswerCorrection {
+  questionId: string;
+  questionText: string;
+  category: string;
+  imageUrl?: string;
+  selectedOptionId: string;
+  selectedOptionText: string;
+  correctOptionId: string;
+  correctOptionText: string;
+  isCorrect: boolean;
+  explanation?: string;
 }
 
 interface MockTestResult {
@@ -24,9 +39,15 @@ interface MockTestResult {
   totalQuestions: number;
   passed: boolean;
   takenAt?: string;
+  corrections?: AnswerCorrection[];
 }
 
-type ExamPhase = 'loading' | 'intro' | 'exam' | 'submitting' | 'result' | 'error';
+interface StartMockTestResponse {
+  mockTestId: string;
+  questions: Question[];
+}
+
+type ExamPhase = 'loading' | 'intro' | 'exam' | 'submitting' | 'result' | 'correction' | 'error';
 
 @Component({
   selector: 'app-theoretical-exam',
@@ -98,7 +119,18 @@ type ExamPhase = 'loading' | 'intro' | 'exam' | 'submitting' | 'result' | 'error
         <!-- Question Card -->
         <div class="question-card">
           <!-- Category tag -->
-          <span class="category-tag">{{ currentQuestion?.category || 'Général' }}</span>
+          <div class="question-meta">
+            <span class="category-tag">{{ currentQuestion?.category || 'Général' }}</span>
+            <span *ngIf="currentQuestion?.difficulty" class="difficulty-tag"
+                  [ngClass]="'diff-' + currentQuestion.difficulty">
+              {{ getDifficultyLabel(currentQuestion.difficulty || 'medium') }}
+            </span>
+          </div>
+
+          <!-- Image if present -->
+          <div *ngIf="currentQuestion?.imageUrl" class="question-image-wrapper">
+            <img [src]="currentQuestion.imageUrl" alt="Question image" class="question-image"/>
+          </div>
 
           <!-- Question text -->
           <h3 class="question-text">{{ currentQuestion?.questionText }}</h3>
@@ -107,10 +139,10 @@ type ExamPhase = 'loading' | 'intro' | 'exam' | 'submitting' | 'result' | 'error
           <div class="options-container">
             <label *ngFor="let option of currentQuestion?.options; let i = index"
                    class="option-label"
-                   [class.selected]="answers[currentQuestion.id] === option.optionText"
-                   (click)="selectAnswer(currentQuestion.id, option.optionText)">
+                   [class.selected]="answers[currentQuestion.id] === option.id"
+                   (click)="selectAnswer(currentQuestion.id, option.id)">
               <!-- Radio circle -->
-              <div class="radio-circle" [class.selected]="answers[currentQuestion.id] === option.optionText"></div>
+              <div class="radio-circle" [class.selected]="answers[currentQuestion.id] === option.id"></div>
               <!-- Option letter + text -->
               <div class="option-content">
                 <span class="option-letter">{{ ['A','B','C','D'][i] }}</span>
@@ -203,8 +235,72 @@ type ExamPhase = 'loading' | 'intro' | 'exam' | 'submitting' | 'result' | 'error
 
         <!-- Actions -->
         <div class="result-actions">
+          <button *ngIf="result.corrections && result.corrections.length > 0"
+                  (click)="showCorrection()"
+                  class="action-btn correction-btn">📋 Voir la correction</button>
           <button (click)="restartExam()" class="action-btn retry-btn">🔄 Repasser l'examen</button>
           <a routerLink="/student/exams" class="action-btn back-btn">← Retour aux examens</a>
+        </div>
+      </div>
+
+      <!-- ===== CORRECTION PHASE ===== -->
+      <div *ngIf="phase === 'correction' && result" class="correction-phase">
+        <div class="correction-header">
+          <div>
+            <h1 class="correction-title">📋 Correction détaillée</h1>
+            <p class="correction-subtitle">
+              Score : <strong>{{ result.score }}/{{ result.totalQuestions }}</strong> —
+              <span [class.text-passed]="result.passed" [class.text-failed]="!result.passed">
+                {{ result.passed ? 'ADMIS' : 'REFUSÉ' }}
+              </span>
+            </p>
+          </div>
+          <button (click)="phase = 'result'" class="nav-btn">← Retour au résultat</button>
+        </div>
+
+        <div class="corrections-list">
+          <div *ngFor="let c of result.corrections; let i = index"
+               class="correction-card"
+               [class.correct]="c.isCorrect"
+               [class.incorrect]="!c.isCorrect">
+            <div class="correction-number">
+              <span class="q-num">Q{{ i + 1 }}</span>
+              <span class="q-status" [class.correct]="c.isCorrect" [class.incorrect]="!c.isCorrect">
+                {{ c.isCorrect ? '✓' : '✗' }}
+              </span>
+            </div>
+
+            <div class="correction-body">
+              <span class="correction-category">{{ c.category }}</span>
+
+              <div *ngIf="c.imageUrl" class="correction-image-wrapper">
+                <img [src]="c.imageUrl" alt="Question image" class="correction-image"/>
+              </div>
+
+              <p class="correction-question">{{ c.questionText }}</p>
+
+              <div class="answer-row">
+                <div class="answer-block your-answer" [class.wrong]="!c.isCorrect">
+                  <div class="answer-label">Votre réponse</div>
+                  <div class="answer-value">{{ c.selectedOptionText }}</div>
+                </div>
+                <div *ngIf="!c.isCorrect" class="answer-block correct-answer">
+                  <div class="answer-label">Bonne réponse</div>
+                  <div class="answer-value">{{ c.correctOptionText }}</div>
+                </div>
+              </div>
+
+              <div *ngIf="c.explanation" class="explanation-box">
+                <div class="explanation-icon">💡</div>
+                <p class="explanation-text">{{ c.explanation }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="correction-footer">
+          <button (click)="restartExam()" class="action-btn retry-btn">🔄 Repasser l'examen</button>
+          <a routerLink="/student/dashboard" class="action-btn back-btn">← Tableau de bord</a>
         </div>
       </div>
 
@@ -446,6 +542,14 @@ type ExamPhase = 'loading' | 'intro' | 'exam' | 'submitting' | 'result' | 'error
       margin-bottom: 2rem;
     }
 
+    .question-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
     .category-tag {
       display: inline-block;
       padding: 0.5rem 1rem;
@@ -457,7 +561,49 @@ type ExamPhase = 'loading' | 'intro' | 'exam' | 'submitting' | 'result' | 'error
       background: linear-gradient(135deg, rgba(79, 70, 229, 0.2), rgba(79, 70, 229, 0.1));
       color: #818cf8;
       border: 1px solid rgba(79, 70, 229, 0.2);
+    }
+
+    .difficulty-tag {
+      display: inline-block;
+      padding: 0.35rem 0.75rem;
+      border-radius: 0.5rem;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .diff-easy {
+      background: rgba(34, 197, 94, 0.15);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+
+    .diff-medium {
+      background: rgba(251, 191, 36, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(251, 191, 36, 0.2);
+    }
+
+    .diff-hard {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .question-image-wrapper {
       margin-bottom: 1.5rem;
+      border-radius: 0.75rem;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .question-image {
+      width: 100%;
+      max-height: 300px;
+      object-fit: contain;
+      display: block;
+      background: rgba(0, 0, 0, 0.2);
     }
 
     .question-text {
@@ -814,6 +960,17 @@ type ExamPhase = 'loading' | 'intro' | 'exam' | 'submitting' | 'result' | 'error
       box-shadow: 0 6px 20px rgba(79, 70, 229, 0.3);
     }
 
+    .action-btn.correction-btn {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(168, 85, 247, 0.1));
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+
+    .action-btn.correction-btn:hover {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(168, 85, 247, 0.15));
+      transform: translateY(-2px);
+    }
+
     .action-btn.back-btn {
       background: rgba(255, 255, 255, 0.06);
       color: #ffffff;
@@ -823,6 +980,208 @@ type ExamPhase = 'loading' | 'intro' | 'exam' | 'submitting' | 'result' | 'error
     .action-btn.back-btn:hover {
       background: rgba(255, 255, 255, 0.1);
       border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    /* ===== CORRECTION PHASE ===== */
+    .correction-phase {
+      animation: slideUp 0.4s ease-out;
+    }
+
+    .correction-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .correction-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin: 0 0 0.25rem;
+    }
+
+    .correction-subtitle {
+      font-size: 0.9rem;
+      color: var(--color-text-muted);
+      margin: 0;
+    }
+
+    .text-passed { color: #4ade80; font-weight: 700; }
+    .text-failed { color: #f87171; font-weight: 700; }
+
+    .corrections-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .correction-card {
+      display: flex;
+      gap: 1.25rem;
+      padding: 1.5rem;
+      border-radius: 1rem;
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(51, 65, 85, 0.6));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: all 0.2s ease;
+    }
+
+    .correction-card.correct {
+      border-left: 4px solid #22c55e;
+    }
+
+    .correction-card.incorrect {
+      border-left: 4px solid #ef4444;
+    }
+
+    .correction-number {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .q-num {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+    }
+
+    .q-status {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      font-weight: 900;
+    }
+
+    .q-status.correct {
+      background: rgba(34, 197, 94, 0.2);
+      color: #4ade80;
+    }
+
+    .q-status.incorrect {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+    }
+
+    .correction-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .correction-category {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background: rgba(79, 70, 229, 0.15);
+      color: #818cf8;
+      margin-bottom: 0.75rem;
+    }
+
+    .correction-image-wrapper {
+      margin-bottom: 0.75rem;
+      border-radius: 0.5rem;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .correction-image {
+      width: 100%;
+      max-height: 200px;
+      object-fit: contain;
+      display: block;
+      background: rgba(0, 0, 0, 0.15);
+    }
+
+    .correction-question {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #ffffff;
+      margin: 0 0 1rem;
+      line-height: 1.5;
+    }
+
+    .answer-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.75rem;
+    }
+
+    .answer-block {
+      flex: 1;
+      min-width: 180px;
+      padding: 0.75rem 1rem;
+      border-radius: 0.75rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .answer-block.your-answer.wrong {
+      background: rgba(239, 68, 68, 0.08);
+      border-color: rgba(239, 68, 68, 0.2);
+    }
+
+    .answer-block.correct-answer {
+      background: rgba(34, 197, 94, 0.08);
+      border-color: rgba(34, 197, 94, 0.2);
+    }
+
+    .answer-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--color-text-muted);
+      margin-bottom: 0.25rem;
+    }
+
+    .answer-value {
+      font-size: 0.9rem;
+      color: #ffffff;
+      font-weight: 500;
+    }
+
+    .explanation-box {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border-radius: 0.75rem;
+      background: rgba(251, 191, 36, 0.06);
+      border: 1px solid rgba(251, 191, 36, 0.15);
+    }
+
+    .explanation-icon {
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .explanation-text {
+      font-size: 0.85rem;
+      color: #fbbf24;
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .correction-footer {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
     }
 
     @media (max-width: 768px) {
@@ -862,6 +1221,14 @@ type ExamPhase = 'loading' | 'intro' | 'exam' | 'submitting' | 'result' | 'error
       .submit-btn {
         width: 100%;
       }
+
+      .correction-card {
+        flex-direction: column;
+      }
+
+      .correction-number {
+        flex-direction: row;
+      }
     }
   `]
 })
@@ -872,6 +1239,7 @@ export class TheoreticalExamComponent implements OnInit {
 
   questions: Question[] = [];
   currentQuestionIndex = 0;
+  // Map of questionId -> selectedOptionId (UUID-based, not text-based)
   answers: { [questionId: string]: string } = {};
 
   studentId = '';
@@ -906,16 +1274,172 @@ export class TheoreticalExamComponent implements OnInit {
 
   private loadQuestions(): void {
     this.loadingMessage = 'Préparation de l\'examen...';
-    // POST /student/mock-tests/start → creates a MockTest in DB and returns Question[]
-    // NOTE: the testId is not returned by this endpoint; we handle submission with the ID
-    // that gets saved in the backend. Once started, we get the questions list.
-    this.http.post<Question[]>(
+    this.http.post<StartMockTestResponse>(
       `${environment.apiUrl}/student/mock-tests/start?studentId=${this.studentId}`,
       {}
     ).subscribe({
-      next: (questions) => {
-        this.questions = questions;
-        if (questions.length === 0) {
+      next: (response) => {
+        this.testId = response.mockTestId;
+        const hardcodedQuestions: Question[] = [
+          {
+            id: 'a1111111-1111-1111-1111-111111111111',
+            category: 'CIRCULATION',
+            questionText: 'Je peux dépasser par la droite :',
+            difficulty: 'easy',
+            options: [
+              { id: 'b1111111-1111-1111-1111-111111111111', optionText: 'Oui' },
+              { id: 'b1111112-1111-1111-1111-111111111111', optionText: 'Non' }
+            ]
+          },
+          {
+            id: 'a2222222-2222-2222-2222-222222222222',
+            category: 'SECURITY',
+            questionText: 'Le taux dalcoolémie maximal autorisé pour un conducteur novice est de :',
+            difficulty: 'easy',
+            options: [
+              { id: 'b2222221-2222-2222-2222-222222222222', optionText: '0.2 g/l' },
+              { id: 'b2222222-2222-2222-2222-222222222222', optionText: '0.5 g/l' }
+            ]
+          },
+          {
+            id: 'a3333333-3333-3333-3333-333333333333',
+            category: 'CIRCULATION',
+            questionText: 'La distance de sécurité minimale en agglomération dépend :',
+            difficulty: 'easy',
+            options: [
+              { id: 'b3333331-3333-3333-3333-333333333333', optionText: 'De la vitesse' },
+              { id: 'b3333332-3333-3333-3333-333333333333', optionText: 'Du marquage' }
+            ]
+          },
+          {
+            id: 'a4444444-4444-4444-4444-444444444444',
+            category: 'SIGNALISATION',
+            questionText: 'Que signifie ce panneau ? (Octogone rouge)',
+            difficulty: 'easy',
+            imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Zeichen_206_-_Halt%21_Vorfahrt_gew%C3%A4hren%21%2C_StVO_1970.svg/200px-Zeichen_206_-_Halt%21_Vorfahrt_gew%C3%A4hren%21%2C_StVO_1970.svg.png',
+            options: [
+              { id: 'b4444441-4444-4444-4444-444444444444', optionText: 'Cédez le passage' },
+              { id: 'b4444442-4444-4444-4444-444444444444', optionText: 'Arrêt obligatoire (STOP)' }
+            ]
+          },
+          {
+            id: 'a5555555-5555-5555-5555-555555555555',
+            category: 'SECURITY',
+            questionText: "L'utilisation du téléphone au volant est autorisée avec :",
+            difficulty: 'easy',
+            options: [
+              { id: 'b5555551-5555-5555-5555-555555555555', optionText: 'Le système Bluetooth intégré' },
+              { id: 'b5555552-5555-5555-5555-555555555555', optionText: 'Des écouteurs' }
+            ]
+          },
+          {
+            id: 'a6666666-6666-6666-6666-666666666666',
+            category: 'CIRCULATION',
+            questionText: 'هل يمكن تجاوز سيارة من اليمين في تونس؟',
+            difficulty: 'easy',
+            options: [
+              { id: 'b6666661-6666-6666-6666-666666666666', optionText: 'نعم' },
+              { id: 'b6666662-6666-6666-6666-666666666666', optionText: 'لا' }
+            ]
+          },
+          {
+            id: 'a7777777-7777-7777-7777-777777777777',
+            category: 'CIRCULATION',
+            questionText: 'ما هي السرعة القصوى داخل المناطق العمرانية؟',
+            difficulty: 'easy',
+            options: [
+              { id: 'b7777771-7777-7777-7777-777777777777', optionText: '50 كم/س' },
+              { id: 'b7777772-7777-7777-7777-777777777777', optionText: '70 كم/س' }
+            ]
+          },
+          {
+            id: 'a8888888-8888-8888-8888-888888888888',
+            category: 'SECURITY',
+            questionText: 'متى يجب استعمال حزام الأمان؟',
+            difficulty: 'easy',
+            options: [
+              { id: 'b8888881-8888-8888-8888-888888888888', optionText: 'في جميع الأوقات' },
+              { id: 'b8888882-8888-8888-8888-888888888888', optionText: 'فقط في الطرق السريعة' }
+            ]
+          },
+          {
+            id: 'a9999999-9999-9999-9999-999999999999',
+            category: 'SIGNALISATION',
+            questionText: 'ما معنى الضوء الأحمر في إشارة المرور؟',
+            difficulty: 'easy',
+            options: [
+              { id: 'b9999991-9999-9999-9999-999999999999', optionText: 'التوقف' },
+              { id: 'b9999992-9999-9999-9999-999999999999', optionText: 'المرور بحذر' }
+            ]
+          },
+          {
+            id: 'a10101010-1010-1010-1010-101010101010',
+            category: 'SECURITY',
+            questionText: 'هل يمكن السياقة بدون رخصة؟',
+            difficulty: 'easy',
+            options: [
+              { id: 'b10101011-1010-1010-1010-101010101010', optionText: 'نعم' },
+              { id: 'b10101012-1010-1010-1010-101010101010', optionText: 'لا' }
+            ]
+          },
+          {
+            id: 'a11111111-1111-1111-1111-111111111112',
+            category: 'SIGNALISATION',
+            questionText: 'ماذا تعني علامة ممنوع الوقوف؟',
+            difficulty: 'easy',
+            options: [
+              { id: 'b11111112-1111-1111-1111-111111111112', optionText: 'ممنوع الوقوف والتوقف' },
+              { id: 'b11111113-1111-1111-1111-111111111112', optionText: 'مسموح الوقوف' }
+            ]
+          },
+          {
+            id: 'a12121212-1212-1212-1212-121212121212',
+            category: 'SECURITY',
+            questionText: 'متى يجب تشغيل الأضواء؟',
+            difficulty: 'easy',
+            options: [
+              { id: 'b12121213-1212-1212-1212-121212121212', optionText: 'في الليل أو عند ضعف الرؤية' },
+              { id: 'b12121214-1212-1212-1212-121212121212', optionText: 'فقط في النهار' }
+            ]
+          },
+          {
+            id: 'a13131313-1313-1313-1313-131313131313',
+            category: 'CIRCULATION',
+            questionText: 'ما هي الأولوية عند مفترق الطرق؟',
+            difficulty: 'medium',
+            options: [
+              { id: 'b13131314-1313-1313-1313-131313131313', optionText: 'الأولوية لليمين' },
+              { id: 'b13131315-1313-1313-1313-131313131313', optionText: 'الأولوية لليسار' }
+            ]
+          },
+          {
+            id: 'a14141414-1414-1414-1414-141414141414',
+            category: 'SECURITY',
+            questionText: 'هل يجب احترام إشارات المرور دائماً؟',
+            difficulty: 'easy',
+            options: [
+              { id: 'b14141415-1414-1414-1414-141414141414', optionText: 'نعم' },
+              { id: 'b14141416-1414-1414-1414-141414141414', optionText: 'لا' }
+            ]
+          },
+          {
+            id: 'a15151515-1515-1515-1515-151515151515',
+            category: 'CIRCULATION',
+            questionText: 'ما هو الحد الأقصى للسرعة في الطرقات السيارة؟',
+            difficulty: 'medium',
+            options: [
+              { id: 'b15151516-1515-1515-1515-151515151515', optionText: '110 كم/س' },
+              { id: 'b15151517-1515-1515-1515-151515151515', optionText: '130 كم/س' }
+            ]
+          }
+        ];
+        
+        // Only add hardcoded questions that are NOT already returned by the backend (avoid duplicates)
+        const backendIds = new Set(response.questions.map((q: Question) => q.id));
+        const newQuestions = hardcodedQuestions.filter(q => !backendIds.has(q.id));
+        this.questions = [...response.questions, ...newQuestions];
+        
+        if (this.questions.length === 0) {
           this.phase = 'error';
           this.errorMsg = 'Aucune question disponible pour le moment. Contactez votre auto-école.';
           return;
@@ -924,7 +1448,6 @@ export class TheoreticalExamComponent implements OnInit {
         this.currentQuestionIndex = 0;
         this.answers = {};
         this.result = null;
-        this.testId = ''; // Will be resolved on submit
         this.phase = 'intro';
       },
       error: (err) => {
@@ -943,6 +1466,10 @@ export class TheoreticalExamComponent implements OnInit {
     this.loadProfile();
   }
 
+  showCorrection(): void {
+    this.phase = 'correction';
+  }
+
   // ─── Navigation ────────────────────────────────────────
   get currentQuestion(): Question {
     return this.questions[this.currentQuestionIndex];
@@ -956,8 +1483,8 @@ export class TheoreticalExamComponent implements OnInit {
     return this.questions.length ? (this.answeredCount / this.questions.length) * 100 : 0;
   }
 
-  selectAnswer(questionId: string, optionText: string): void {
-    this.answers[questionId] = optionText;
+  selectAnswer(questionId: string, optionId: string): void {
+    this.answers[questionId] = optionId;
   }
 
   previousQuestion(): void {
@@ -977,6 +1504,15 @@ export class TheoreticalExamComponent implements OnInit {
     return Math.round((this.result.score / this.result.totalQuestions) * 100);
   }
 
+  getDifficultyLabel(difficulty: string): string {
+    switch (difficulty) {
+      case 'easy': return 'Facile';
+      case 'medium': return 'Moyen';
+      case 'hard': return 'Difficile';
+      default: return difficulty;
+    }
+  }
+
   // ─── Submission ─────────────────────────────────────────
   submitTest(): void {
     if (this.answeredCount === 0) return;
@@ -984,54 +1520,17 @@ export class TheoreticalExamComponent implements OnInit {
 
     this.phase = 'submitting';
 
-    // If we have a testId, submit to the real endpoint
-    if (this.testId) {
-      this.submitWithId(this.testId);
-    } else {
-      // The backend's /start endpoint creates the MockTest record but doesn't return its ID.
-      // We do local scoring as fallback when the ID is not available.
-      // This is correct behavior since we cannot modify the backend.
-      this.computeLocalResult();
-    }
-  }
-
-  private submitWithId(id: string): void {
+    // answers is Map<questionId, selectedOptionId> — matching the new backend contract
     const payload = { answers: this.answers };
-    this.http.post<any>(`${environment.apiUrl}/student/mock-tests/${id}/submit`, payload).subscribe({
+    this.http.post<MockTestResult>(`${environment.apiUrl}/student/mock-tests/${this.testId}/submit`, payload).subscribe({
       next: (res) => {
-        this.result = {
-          id: res.id,
-          studentId: res.studentId,
-          score: res.score,
-          totalQuestions: res.totalQuestions,
-          passed: res.passed,
-          takenAt: res.takenAt
-        };
+        this.result = res;
         this.phase = 'result';
       },
-      error: () => {
-        // Fallback to local scoring if submit fails
-        this.computeLocalResult();
+      error: (err) => {
+        this.phase = 'error';
+        this.errorMsg = 'Erreur lors de la soumission: ' + (err.error?.message || err.message || 'Erreur serveur');
       }
     });
-  }
-
-  private computeLocalResult(): void {
-    // Count questions answered (each answered question = 1 point as a simplified local score)
-    // In reality, the backend checks correct answers — but since we don't have correctAnswer here,
-    // we give credit for each answered question (mock scoring for UI demonstration)
-    const answered = Object.keys(this.answers).length;
-    const total = this.questions.length;
-    const score = answered; // Best approximation without knowing correct answers
-    const passed = score / total >= 0.75;
-
-    this.result = {
-      studentId: this.studentId,
-      score,
-      totalQuestions: total,
-      passed,
-      takenAt: new Date().toISOString()
-    };
-    this.phase = 'result';
   }
 }

@@ -12,6 +12,12 @@ import { environment } from '../../../../../environments/environment';
   template: `
     <div class="signup-page">
       <div class="signup-card">
+        <a routerLink="/register" class="back-button" aria-label="Retour au choix du compte">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          Retour aux choix
+        </a>
         <div class="signup-header">
           <h1>Créez votre école de conduite</h1>
           <p>Inscrivez votre auto-école pour gérer votre plateforme</p>
@@ -94,29 +100,42 @@ import { environment } from '../../../../../environments/environment';
     `
       :host {
         display: block;
-        min-height: 100vh;
-        padding: 2rem;
-        background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)),
-          url('https://templatemo.com/templates/templatemo_583_festava_live/assets/images/slide-01.jpg') center/cover no-repeat;
+        width: 100%;
         color: #ffffff;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       }
 
       .signup-page {
         display: flex;
         align-items: center;
         justify-content: center;
-        min-height: 100vh;
+        width: 100%;
       }
 
       .signup-card {
-        width: min(520px, 100%);
-        padding: 2.25rem 2rem;
-        border-radius: 16px;
-        background: rgba(255, 255, 255, 0.12);
-        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
-        backdrop-filter: blur(14px);
-        border: 1px solid rgba(255, 255, 255, 0.18);
+        width: min(480px, 100%);
+        padding: 1rem 0;
+      }
+
+      .back-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: rgba(255, 255, 255, 0.6);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+        transition: color 0.2s, transform 0.2s;
+      }
+
+      .back-button svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      .back-button:hover {
+        color: #ffffff;
+        transform: translateX(-3px);
       }
 
       .signup-header {
