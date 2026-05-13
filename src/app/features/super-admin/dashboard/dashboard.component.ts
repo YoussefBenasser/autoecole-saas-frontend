@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { environment } from '../../../../environments/environment';
 
 interface Tenant {
@@ -31,10 +32,18 @@ interface Student {
   level?: string;
 }
 
+interface AuditLog {
+  id: string;
+  tenantId: string;
+  userId?: string;
+  action: string;
+  timestamp: string;
+}
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   template: `
     <div class="dashboard-container">
       <!-- Header Section -->
@@ -206,7 +215,7 @@ interface Student {
                 <div class="card-actions">
                   <div *ngIf="tenant.status === 'PENDING'" style="display: flex; gap: 0.5rem; width: 100%;">
                     <button
-                      (click)="approveTenant(tenant.id)"
+                      (click)="openPasswordModal(tenant.id)"
                       class="action-button approve-button"
                       [disabled]="isLoading">
                       <svg class="button-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -248,6 +257,46 @@ interface Student {
               </svg>
               <h3>Aucune inscription récente</h3>
               <p>Les nouvelles demandes apparaîtront ici automatiquement.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audit Logs Table -->
+        <div class="recent-logs">
+          <div class="section-header">
+            <h2 class="section-title">📜 Journal d'Audit</h2>
+            <p class="section-subtitle">Dernières activités sur la plateforme</p>
+          </div>
+
+          <div *ngIf="isLoading" class="loading">
+            <div class="spinner"></div>
+            <p>Chargement du journal...</p>
+          </div>
+
+          <div *ngIf="!isLoading" class="logs-list" style="display: flex; flex-direction: column; gap: 1rem;">
+            <div *ngFor="let log of recentLogs" class="log-card" style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+              <div class="log-info" style="display: flex; gap: 1rem; align-items: center;">
+                <div class="log-icon" style="background: rgba(14, 165, 233, 0.2); color: #38bdf8; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 20px; height: 20px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 style="margin: 0; color: #f8fafc; font-size: 1rem;">{{ log.action }}</h4>
+                  <p style="margin: 0; color: #94a3b8; font-size: 0.875rem;">Utilisateur ID: {{ log.userId || 'Système' }} | Locataire: {{ log.tenantId }}</p>
+                </div>
+              </div>
+              <div class="log-time" style="color: #64748b; font-size: 0.875rem;">
+                {{ log.timestamp | date:'dd/MM/yyyy HH:mm' }}
+              </div>
+            </div>
+
+            <div *ngIf="recentLogs.length === 0" class="empty">
+              <svg class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <h3>Aucune activité</h3>
+              <p>Les activités apparaîtront ici.</p>
             </div>
           </div>
         </div>
@@ -309,6 +358,32 @@ interface Student {
           </div>
         </div>
       </div>
+
+      <!-- Password Modal -->
+      <div *ngIf="showPasswordModal" class="modal-overlay">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2 class="modal-title">Approuver l'auto-école</h2>
+            <button class="close-btn" (click)="closePasswordModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <p class="modal-description">Veuillez définir un mot de passe provisoire pour permettre à l'auto-école de se connecter immédiatement.</p>
+            <p class="modal-note">Si vous laissez ce champ vide, un e-mail contenant un lien de configuration lui sera envoyé.</p>
+            
+            <div class="input-group">
+              <label>Mot de passe provisoire</label>
+              <input type="text" [(ngModel)]="provisionalPassword" placeholder="Ex: AutoEcole123!" class="password-input" />
+            </div>
+          </div>
+          
+          <div class="modal-actions">
+            <button class="cancel-btn" (click)="closePasswordModal()" [disabled]="isSubmitting">Annuler</button>
+            <button class="confirm-btn" (click)="submitApproval()" [disabled]="isSubmitting">
+              {{ isSubmitting ? 'En cours...' : 'Approuver' }}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   `,
   styleUrls: ['./dashboard.component.css']
@@ -320,8 +395,14 @@ export class DashboardComponent implements OnInit {
   approvalRate = 0;
   recentTenants: Tenant[] = [];
   recentStudents: Student[] = [];
+  recentLogs: AuditLog[] = [];
   isLoading = false;
   expandedTenantId: string | null = null;
+  showPasswordModal = false;
+  selectedTenantIdForApproval: string | null = null;
+  provisionalPassword = '';
+  isSubmitting = false;
+
   today = new Date().toLocaleDateString('fr-FR', {
     weekday: 'long',
     year: 'numeric',
@@ -426,16 +507,55 @@ export class DashboardComponent implements OnInit {
         console.error('Error loading students:', error);
       }
     });
+
+    // Load audit logs
+    this.http.get<AuditLog[]>(`${environment.apiUrl}/audit`).subscribe({
+      next: (logs) => {
+        this.recentLogs = logs.slice(0, 5);
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error loading audit logs:', error);
+      }
+    });
   }
 
-  approveTenant(tenantId: string) {
-    this.http.post(`${environment.apiUrl}/super-admin/tenants/${tenantId}/approve`, {}).subscribe({
-      next: () => {
-        this.loadDashboardData(); // Refresh data
+  openPasswordModal(tenantId: string) {
+    this.selectedTenantIdForApproval = tenantId;
+    this.provisionalPassword = '';
+    this.showPasswordModal = true;
+  }
+
+  closePasswordModal() {
+    this.showPasswordModal = false;
+    this.selectedTenantIdForApproval = null;
+    this.provisionalPassword = '';
+  }
+
+  submitApproval() {
+    if (!this.selectedTenantIdForApproval) return;
+    const tenantId = this.selectedTenantIdForApproval;
+    const password = this.provisionalPassword.trim();
+
+    this.isSubmitting = true;
+
+    const body = password ? { provisionalPassword: password } : {};
+
+    this.http.post<any>(`${environment.apiUrl}/super-admin/tenants/${tenantId}/approve`, body).subscribe({
+      next: (response) => {
+        this.isSubmitting = false;
+        this.closePasswordModal();
+        if (response.provisionalPasswordSet) {
+          alert('École approuvée ! Le tenant peut se connecter avec le mot de passe provisoire et devra le changer à la première connexion.');
+        } else {
+          alert('École approuvée avec succès. Un e-mail de configuration a été envoyé.');
+        }
+        this.loadDashboardData();
       },
       error: (error) => {
         console.error('Error approving tenant:', error);
-        alert('Erreur lors de l\'approbation: ' + (error?.error?.message || error?.message || 'Erreur inconnue'));
+        alert('Erreur lors de l\'approbation : ' + (error?.error?.message || error?.message || 'Erreur inconnue'));
+        this.isSubmitting = false;
       }
     });
   }

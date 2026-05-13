@@ -126,9 +126,9 @@ interface Student {
         <div *ngFor="let s of filteredSessions; let i = index" class="session-card" [style.animation-delay]="(i * 0.05) + 's'">
           <div class="session-time-col">
             <div class="time-badge">
-              <span class="time-main">{{ s.startTime?.substring(0,5) || '—' }}</span>
+              <span class="time-main">{{ s.startTime.substring(0,5) || '—' }}</span>
               <span class="time-sep">→</span>
-              <span class="time-main">{{ s.endTime?.substring(0,5) || '—' }}</span>
+              <span class="time-main">{{ s.endTime.substring(0,5) || '—' }}</span>
             </div>
             <div class="date-badge">{{ s.sessionDate }}</div>
           </div>
@@ -140,7 +140,7 @@ interface Student {
             <div class="session-row-top">
               <div class="session-monitor">
                 <div class="avatar-sm avatar-amber">
-                  {{ s.monitorName?.charAt(0) || s.monitorId?.charAt(0) || 'M' }}
+                  {{ (s.monitorName || s.monitorId || 'M').charAt(0) }}
                 </div>
                 <div>
                   <span class="label-small">Moniteur</span>

@@ -120,24 +120,24 @@ type ExamPhase = 'loading' | 'intro' | 'exam' | 'submitting' | 'result' | 'corre
         <div class="question-card">
           <!-- Category tag -->
           <div class="question-meta">
-            <span class="category-tag">{{ currentQuestion?.category || 'Général' }}</span>
-            <span *ngIf="currentQuestion?.difficulty" class="difficulty-tag"
+            <span class="category-tag">{{ currentQuestion.category || 'Général' }}</span>
+            <span *ngIf="currentQuestion.difficulty" class="difficulty-tag"
                   [ngClass]="'diff-' + currentQuestion.difficulty">
               {{ getDifficultyLabel(currentQuestion.difficulty || 'medium') }}
             </span>
           </div>
 
           <!-- Image if present -->
-          <div *ngIf="currentQuestion?.imageUrl" class="question-image-wrapper">
+          <div *ngIf="currentQuestion.imageUrl" class="question-image-wrapper">
             <img [src]="currentQuestion.imageUrl" alt="Question image" class="question-image"/>
           </div>
 
           <!-- Question text -->
-          <h3 class="question-text">{{ currentQuestion?.questionText }}</h3>
+          <h3 class="question-text">{{ currentQuestion.questionText }}</h3>
 
           <!-- Options -->
           <div class="options-container">
-            <label *ngFor="let option of currentQuestion?.options; let i = index"
+            <label *ngFor="let option of currentQuestion.options; let i = index"
                    class="option-label"
                    [class.selected]="answers[currentQuestion.id] === option.id"
                    (click)="selectAnswer(currentQuestion.id, option.id)">

@@ -73,6 +73,16 @@ export const routes: Routes = [
         path: 'monitors',
         loadComponent: () =>
           import('./features/super-admin/monitors/monitors.component').then(m => m.SuperAdminMonitorsComponent)
+      },
+      {
+        path: 'audit',
+        loadComponent: () =>
+          import('./features/super-admin/audit-logs/audit-logs.component').then(m => m.SuperAdminAuditLogsComponent)
+      },
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./shared/profile/profile.component').then(m => m.ProfileComponent)
       }
     ]
   },
@@ -113,6 +123,26 @@ export const routes: Routes = [
         path: 'sessions',
         loadComponent: () =>
           import('./features/tenant/sessions/sessions.component').then(m => m.SessionsComponent)
+      },
+      {
+        path: 'audit',
+        loadComponent: () =>
+          import('./features/tenant/audit-logs/audit-logs.component').then(m => m.TenantAuditLogsComponent)
+      },
+      {
+        path: 'change-password',
+        loadComponent: () =>
+          import('./features/tenant/change-password/change-password.component').then(m => m.ChangePasswordComponent)
+      },
+      {
+        path: 'chat',
+        loadComponent: () =>
+          import('./features/tenant/chat/chat.component').then(m => m.TenantChatComponent)
+      },
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./shared/profile/profile.component').then(m => m.ProfileComponent)
       }
     ]
   },
@@ -149,6 +179,16 @@ export const routes: Routes = [
         path: 'theoretical-exam',
         loadComponent: () =>
           import('./features/student/theoretical-exam/theoretical-exam.component').then(m => m.TheoreticalExamComponent)
+      },
+      {
+        path: 'chat',
+        loadComponent: () =>
+          import('./features/student/chat/chat.component').then(m => m.StudentChatComponent)
+      },
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./shared/profile/profile.component').then(m => m.ProfileComponent)
       }
     ]
   },
@@ -169,6 +209,16 @@ export const routes: Routes = [
         path: 'sessions',
         loadComponent: () =>
           import('./features/monitor/sessions/sessions.component').then(m => m.SessionsComponent)
+      },
+      {
+        path: 'chat',
+        loadComponent: () =>
+          import('./features/monitor/chat/chat.component').then(m => m.MonitorChatComponent)
+      },
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./shared/profile/profile.component').then(m => m.ProfileComponent)
       }
     ]
   },

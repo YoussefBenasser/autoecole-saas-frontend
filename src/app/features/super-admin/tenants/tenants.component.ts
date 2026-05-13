@@ -214,6 +214,82 @@ interface Tenant {
           </svg>
         </button>
       </div>
+
+      <!-- Password Modal -->
+      <div *ngIf="showPasswordModal" class="modal-overlay" (click.self)="closePasswordModal()">
+        <div class="modal-content">
+          <div class="modal-header">
+            <div class="modal-header-icon">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="modal-title">Approuver l'auto-école</h2>
+              <p class="modal-subtitle">Définissez un accès immédiat pour le tenant</p>
+            </div>
+            <button class="modal-close-btn" (click)="closePasswordModal()" [disabled]="isSubmitting">&times;</button>
+          </div>
+
+          <div class="modal-body">
+            <div class="modal-info-box">
+              <svg class="modal-info-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p>Si vous entrez un mot de passe provisoire, le tenant pourra se connecter immédiatement et <strong>devra le changer à sa première connexion</strong>. Si vous laissez ce champ vide, un lien de configuration lui sera envoyé par e-mail.</p>
+            </div>
+
+            <div class="modal-field">
+              <label class="modal-label">Mot de passe provisoire <span class="modal-optional">(facultatif)</span></label>
+              <div class="modal-input-wrapper">
+                <svg class="modal-input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <input
+                  [type]="showProvisionalPassword ? 'text' : 'password'"
+                  [(ngModel)]="provisionalPassword"
+                  name="provisionalPassword"
+                  placeholder="Ex: AutoEcole2024!"
+                  class="modal-input"
+                />
+                <button type="button" class="modal-toggle-pw" (click)="toggleProvisionalPassword()">
+                  <svg *ngIf="!showProvisionalPassword" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  <svg *ngIf="showProvisionalPassword" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="modal-notice" *ngIf="!provisionalPassword">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              <span>Un lien de configuration par e-mail sera envoyé au tenant</span>
+            </div>
+            <div class="modal-notice success-notice" *ngIf="provisionalPassword">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+              </svg>
+              <span>Le tenant pourra se connecter immédiatement avec ce mot de passe provisoire</span>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button class="modal-cancel-btn" (click)="closePasswordModal()" [disabled]="isSubmitting">Annuler</button>
+            <button class="modal-confirm-btn" (click)="submitApproval()" [disabled]="isSubmitting">
+              <svg *ngIf="!isSubmitting" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <span class="modal-spinner" *ngIf="isSubmitting"></span>
+              {{ isSubmitting ? 'Approbation en cours...' : 'Confirmer l\'approbation' }}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   `,
   styles: [`
@@ -928,6 +1004,280 @@ interface Tenant {
       background: rgba(255, 255, 255, 0.1);
     }
 
+    /* ── Modal Styles ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      animation: fadeInOverlay 0.2s ease;
+    }
+
+    @keyframes fadeInOverlay {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-content {
+      background: linear-gradient(135deg, rgba(20, 20, 40, 0.98) 0%, rgba(30, 20, 50, 0.98) 100%);
+      backdrop-filter: blur(30px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 24px;
+      width: min(560px, 100%);
+      box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.05);
+      animation: slideUpModal 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      overflow: hidden;
+    }
+
+    @keyframes slideUpModal {
+      from { transform: translateY(30px) scale(0.96); opacity: 0; }
+      to { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.75rem 1.75rem 1.25rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .modal-header-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(16, 185, 129, 0.2));
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .modal-header-icon svg {
+      width: 22px;
+      height: 22px;
+      color: #22c55e;
+    }
+
+    .modal-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: white;
+      margin: 0 0 0.2rem;
+    }
+
+    .modal-subtitle {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.5);
+      margin: 0;
+    }
+
+    .modal-close-btn {
+      margin-left: auto;
+      width: 32px;
+      height: 32px;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.6);
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .modal-close-btn:hover:not(:disabled) {
+      background: rgba(255,255,255,0.1);
+      color: white;
+    }
+
+    .modal-close-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .modal-body {
+      padding: 1.5rem 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .modal-info-box {
+      display: flex;
+      gap: 0.75rem;
+      padding: 1rem;
+      background: rgba(59, 130, 246, 0.08);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 12px;
+      color: rgba(147, 197, 253, 0.9);
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+
+    .modal-info-icon {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      margin-top: 1px;
+      color: #60a5fa;
+    }
+
+    .modal-info-box strong { color: #93c5fd; }
+
+    .modal-field { display: flex; flex-direction: column; gap: 0.5rem; }
+
+    .modal-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.8);
+    }
+
+    .modal-optional {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.4);
+      font-weight: 400;
+    }
+
+    .modal-input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .modal-input-icon {
+      position: absolute;
+      left: 0.9rem;
+      width: 16px;
+      height: 16px;
+      color: rgba(255,255,255,0.35);
+      pointer-events: none;
+    }
+
+    .modal-input {
+      width: 100%;
+      padding: 0.85rem 3rem 0.85rem 2.6rem;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      color: white;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border 0.25s, box-shadow 0.25s;
+      font-family: inherit;
+    }
+
+    .modal-input:focus {
+      border-color: rgba(34, 197, 94, 0.5);
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+      background: rgba(255,255,255,0.08);
+    }
+
+    .modal-input::placeholder { color: rgba(255,255,255,0.25); }
+
+    .modal-toggle-pw {
+      position: absolute;
+      right: 0.75rem;
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.4);
+      cursor: pointer;
+      padding: 0.25rem;
+      display: flex;
+      align-items: center;
+      transition: color 0.2s;
+    }
+
+    .modal-toggle-pw:hover { color: rgba(255,255,255,0.8); }
+
+    .modal-notice {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.65rem 0.9rem;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.5);
+      font-size: 0.82rem;
+    }
+
+    .modal-notice.success-notice {
+      background: rgba(34, 197, 94, 0.07);
+      border-color: rgba(34, 197, 94, 0.2);
+      color: rgba(134, 239, 172, 0.9);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.75rem;
+      padding: 1.25rem 1.75rem;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .modal-cancel-btn {
+      flex: 1;
+      padding: 0.85rem;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.7);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .modal-cancel-btn:hover:not(:disabled) {
+      background: rgba(255,255,255,0.1);
+      color: white;
+    }
+
+    .modal-cancel-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .modal-confirm-btn {
+      flex: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.85rem;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #22c55e 0%, #10b981 100%);
+      color: white;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+      font-family: inherit;
+    }
+
+    .modal-confirm-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 25px rgba(34, 197, 94, 0.4);
+    }
+
+    .modal-confirm-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .modal-spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+
     /* Responsive Design */
     @media (max-width: 768px) {
       .tenants-container {
@@ -983,6 +1333,13 @@ export class TenantsComponent implements OnInit {
   successMessage = '';
   searchQuery = '';
   expandedTenantId: string | null = null;
+
+  // Modal state
+  showPasswordModal = false;
+  provisionalPassword = '';
+  showProvisionalPassword = false;
+  isSubmitting = false;
+  pendingApprovalId: string | null = null;
 
   constructor(private http: HttpClient, private cdr: ChangeDetectorRef) { }
 
@@ -1061,21 +1418,54 @@ export class TenantsComponent implements OnInit {
   }
 
   approveTenant(id: string): void {
-    if (!confirm('Êtes-vous sûr de vouloir approuver cette école ?')) {
-      return;
-    }
+    this.pendingApprovalId = id;
+    this.provisionalPassword = '';
+    this.showProvisionalPassword = false;
+    this.showPasswordModal = true;
+  }
 
-    this.isLoading = true;
+  openPasswordModal(id: string): void {
+    this.approveTenant(id);
+  }
+
+  closePasswordModal(): void {
+    this.showPasswordModal = false;
+    this.pendingApprovalId = null;
+    this.provisionalPassword = '';
+    this.isSubmitting = false;
+  }
+
+  toggleProvisionalPassword(): void {
+    this.showProvisionalPassword = !this.showProvisionalPassword;
+  }
+
+  submitApproval(): void {
+    if (!this.pendingApprovalId) return;
+
+    this.isSubmitting = true;
     this.errorMessage = '';
     this.successMessage = '';
-    this.http.post(`${environment.apiUrl}/super-admin/tenants/${id}/approve`, {}).subscribe({
-      next: () => {
-        this.successMessage = 'École approuvée, email envoyé pour configurer le mot de passe.';
+
+    const id = this.pendingApprovalId;
+    const password = this.provisionalPassword.trim();
+
+    const body = password ? { provisionalPassword: password } : {};
+
+    this.http.post<any>(`${environment.apiUrl}/super-admin/tenants/${id}/approve`, body).subscribe({
+      next: (response) => {
+        this.isSubmitting = false;
+        this.closePasswordModal();
+        if (response.provisionalPasswordSet) {
+          this.successMessage = 'École approuvée ! Le tenant peut maintenant se connecter avec le mot de passe provisoire et devra le changer à sa première connexion.';
+        } else {
+          this.successMessage = 'École approuvée avec succès. Un e-mail de configuration a été envoyé.';
+        }
         this.loadTenants();
       },
       error: (error: any) => {
-        this.errorMessage = 'Erreur lors de l\'approbation de l\'école: ' + (error?.error?.message || error?.message || 'Erreur inconnue');
-        this.isLoading = false;
+        this.isSubmitting = false;
+        this.errorMessage = "Erreur lors de l'approbation\xa0: " + (error?.error?.message || error?.message || 'Erreur inconnue');
+        this.closePasswordModal();
       }
     });
   }

@@ -32,6 +32,23 @@ interface RecentPayment {
   status?: string;
 }
 
+interface JoinRequest {
+  requestId: string;
+  studentId: string;
+  fullName: string;
+  email: string;
+  status: string;
+  createdAt: string;
+}
+
+interface AuditLog {
+  id: string;
+  tenantId: string;
+  userId?: string;
+  action: string;
+  timestamp: string;
+}
+
 @Component({
   selector: 'app-tenant-dashboard',
   standalone: true,
@@ -178,6 +195,89 @@ interface RecentPayment {
         </table>
       </div>
     </div>
+
+    <div class="recent-logs" style="margin-top: 2rem;">
+      <div class="section-header">
+        <h2 class="section-title">📜 Journal d'Activité</h2>
+      </div>
+
+      <div *ngIf="recentLogs.length === 0" class="empty" style="padding: 2rem;">
+        Aucune activité récente.
+      </div>
+
+      <div *ngIf="recentLogs.length > 0" class="logs-list" style="display: flex; flex-direction: column; gap: 1rem;">
+        <div *ngFor="let log of recentLogs" style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; gap: 1rem; align-items: center;">
+            <div style="background: rgba(14, 165, 233, 0.2); color: #38bdf8; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 20px; height: 20px;">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <h4 style="margin: 0; color: #f8fafc; font-size: 1rem;">{{ log.action }}</h4>
+              <p style="margin: 0; color: #94a3b8; font-size: 0.875rem;">ID Utilisateur : {{ log.userId || 'Système' }}</p>
+            </div>
+          </div>
+          <div style="color: #64748b; font-size: 0.875rem;">
+            {{ log.timestamp | date:'dd/MM/yyyy HH:mm' }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="recent-tenants" style="margin-top: 2rem; border: 2px solid rgba(251,191,36,0.25);">
+      <div class="section-header" style="background: linear-gradient(135deg, rgba(251,191,36,0.08), transparent);">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="display:flex; align-items:center; gap:0.75rem;">
+            <span style="font-size:1.5rem;">📋</span>
+            <div>
+              <h2 class="section-title">Demandes d'inscription</h2>
+              <p style="color:rgba(255,255,255,0.5); font-size:0.85rem; margin:0;">Élèves souhaitant rejoindre votre école</p>
+            </div>
+          </div>
+          <span *ngIf="joinRequests.length > 0" style="background:rgba(251,191,36,0.2); color:#fbbf24; padding:0.35rem 0.85rem; border-radius:999px; font-size:0.8rem; font-weight:700;">{{ joinRequests.length }} en attente</span>
+        </div>
+      </div>
+      <div *ngIf="requestsLoading" style="padding:2rem; text-align:center; color:rgba(255,255,255,0.5);">Chargement...</div>
+      <div *ngIf="!requestsLoading && joinRequests.length === 0" class="empty" style="padding:2rem;">Aucune demande en attente.</div>
+      <div *ngIf="!requestsLoading && joinRequests.length > 0" style="padding:0;">
+        <table style="width:100%; border-collapse:collapse; text-align:left;">
+          <thead>
+            <tr>
+              <th style="padding:1rem 1.5rem; font-weight:600; color:rgba(255,255,255,0.7); background:rgba(255,255,255,0.04); font-size:0.8rem; text-transform:uppercase;">Élève</th>
+              <th style="padding:1rem 1.5rem; font-weight:600; color:rgba(255,255,255,0.7); background:rgba(255,255,255,0.04); font-size:0.8rem; text-transform:uppercase;">Email</th>
+              <th style="padding:1rem 1.5rem; font-weight:600; color:rgba(255,255,255,0.7); background:rgba(255,255,255,0.04); font-size:0.8rem; text-transform:uppercase;">Date</th>
+              <th style="padding:1rem 1.5rem; font-weight:600; color:rgba(255,255,255,0.7); background:rgba(255,255,255,0.04); font-size:0.8rem; text-transform:uppercase; text-align:right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let req of joinRequests" style="border-top:1px solid rgba(255,255,255,0.07); transition:background 0.2s;">
+              <td style="padding:1rem 1.5rem; color:#fff; font-weight:600; font-size:0.9rem;">{{ req.fullName }}</td>
+              <td style="padding:1rem 1.5rem; color:rgba(255,255,255,0.6); font-size:0.9rem;">{{ req.email }}</td>
+              <td style="padding:1rem 1.5rem; color:rgba(255,255,255,0.5); font-size:0.85rem;">{{ req.createdAt | date:'dd/MM/yyyy' }}</td>
+              <td style="padding:1rem 1.5rem; text-align:right;">
+                <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+                  <button
+                    (click)="approveRequest(req.requestId)"
+                    [disabled]="processingId === req.requestId"
+                    style="padding:0.5rem 1rem; border:none; border-radius:0.6rem; background:linear-gradient(135deg,#22c55e,#16a34a); color:#fff; font-weight:600; font-size:0.8rem; cursor:pointer; transition:all 0.2s;"
+                    [style.opacity]="processingId === req.requestId ? '0.5' : '1'">
+                    ✓ Accepter
+                  </button>
+                  <button
+                    (click)="rejectRequest(req.requestId)"
+                    [disabled]="processingId === req.requestId"
+                    style="padding:0.5rem 1rem; border:none; border-radius:0.6rem; background:linear-gradient(135deg,rgba(239,68,68,0.3),rgba(239,68,68,0.2)); color:#f87171; font-weight:600; font-size:0.8rem; cursor:pointer; transition:all 0.2s; border:1px solid rgba(239,68,68,0.3);"
+                    [style.opacity]="processingId === req.requestId ? '0.5' : '1'">
+                    ✕ Refuser
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
   `,
   styleUrls: ['./dashboard.component.css']
@@ -198,6 +298,10 @@ export class TenantDashboardComponent implements OnInit {
 
   recentStudents: RecentStudent[] = [];
   recentPayments: RecentPayment[] = [];
+  joinRequests: JoinRequest[] = [];
+  recentLogs: AuditLog[] = [];
+  requestsLoading = true;
+  processingId: string | null = null;
 
   studentsLoading = true;
   statsLoading    = true;
@@ -208,6 +312,7 @@ export class TenantDashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadDashboard();
+    this.loadJoinRequests();
   }
 
   loadDashboard(): void {
@@ -287,6 +392,56 @@ export class TenantDashboardComponent implements OnInit {
         this.cdr.detectChanges();
       },
       error: () => {}
+    });
+
+    // Load audit logs
+    this.http.get<AuditLog[]>(`${environment.apiUrl}/audit`).subscribe({
+      next: logs => {
+        this.recentLogs = logs.slice(0, 5);
+        this.cdr.detectChanges();
+      },
+      error: () => {}
+    });
+  }
+
+  loadJoinRequests(): void {
+    this.requestsLoading = true;
+    this.http.get<JoinRequest[]>(`${environment.apiUrl}/join-requests/pending`).subscribe({
+      next: (requests) => {
+        this.joinRequests = requests;
+        this.requestsLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.requestsLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  approveRequest(requestId: string): void {
+    this.processingId = requestId;
+    this.http.post(`${environment.apiUrl}/join-requests/${requestId}/approve`, null, { responseType: 'text' }).subscribe({
+      next: () => {
+        this.joinRequests = this.joinRequests.filter(r => r.requestId !== requestId);
+        this.processingId = null;
+        this.cdr.detectChanges();
+        // Refresh student count
+        this.tenantService.getStudents().subscribe({ next: s => { this.kpiStats[0].value = String(s.length); this.cdr.detectChanges(); }, error: () => {} });
+      },
+      error: () => { this.processingId = null; this.cdr.detectChanges(); }
+    });
+  }
+
+  rejectRequest(requestId: string): void {
+    this.processingId = requestId;
+    this.http.post(`${environment.apiUrl}/join-requests/${requestId}/reject`, null, { responseType: 'text' }).subscribe({
+      next: () => {
+        this.joinRequests = this.joinRequests.filter(r => r.requestId !== requestId);
+        this.processingId = null;
+        this.cdr.detectChanges();
+      },
+      error: () => { this.processingId = null; this.cdr.detectChanges(); }
     });
   }
 

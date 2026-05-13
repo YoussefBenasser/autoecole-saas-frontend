@@ -10,6 +10,8 @@ interface Student {
   fullName?: string;
   full_name?: string;
   tenantName?: string;
+  schoolName?: string;
+  tenant?: { name?: string; id?: string };
   user?: {
     name?: string;
     fullName?: string;
@@ -23,6 +25,9 @@ interface Student {
   lastName?: string;
   telephone?: string;
   level?: string;
+  prenom?: string;
+  nom?: string;
+  email?: string;
 }
 
 @Component({
@@ -116,8 +121,13 @@ interface Student {
                   <span class="user-name">{{ s.user?.firstName || s.firstName || '—' }}</span>
                 </div>
               </td>
-              <td class="user-name">{{ s.user?.lastName || s.lastName || '—' }}</td>
-              <td class="text-muted">{{ s.tenantName || '—' }}</td>
+              <td class="user-name">{{ s.user?.lastName || s.lastName || s.nom || '—' }}</td>
+              <td class="school-cell">
+                <span *ngIf="s.schoolName || s.tenantName || s.tenant?.name" class="school-badge">
+                  🏫 {{ s.schoolName || s.tenantName || s.tenant?.name }}
+                </span>
+                <span *ngIf="!s.schoolName && !s.tenantName && !s.tenant?.name" class="no-school">—</span>
+              </td>
               <td class="text-muted">{{ s.user?.email || '—' }}</td>
               <td class="text-muted">{{ s.telephone || s.user?.telephone || '—' }}</td>
               <td>
@@ -442,6 +452,15 @@ interface Student {
       color: rgba(255, 255, 255, 0.2);
     }
 
+    /* School Badge */
+    .school-cell { vertical-align: middle; }
+    .school-badge {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      padding: 0.3rem 0.7rem; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
+      background: rgba(79,70,229,0.12); border: 1px solid rgba(79,70,229,0.25); color: #a5b4fc;
+    }
+    .no-school { color: rgba(255, 255, 255, 0.3); }
+
     /* Responsive */
     @media (max-width: 768px) {
       .page-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
@@ -551,14 +570,15 @@ export class StudentsComponent implements OnInit {
   private normalizeStudent(student: Student): Student {
     const explicitName = student.name?.trim() || student.fullName?.trim() || student.full_name?.trim()
       || student.user?.name?.trim() || student.user?.fullName?.trim() || student.user?.full_name?.trim();
-    const first = (student.user?.firstName || student.firstName || '').trim();
-    const last = (student.user?.lastName || student.lastName || '').trim();
+    const first = (student.user?.firstName || student.firstName || student.prenom || '').trim();
+    const last = (student.user?.lastName || student.lastName || student.nom || '').trim();
     const normalizedName = explicitName || [first, last].filter(Boolean).join(' ').trim();
     return {
       ...student,
       name: normalizedName || student.name,
       fullName: student.fullName || student.name || normalizedName,
       full_name: student.full_name || student.name || normalizedName,
+      schoolName: student.schoolName || student.tenantName || student.tenant?.name,
     };
   }
 

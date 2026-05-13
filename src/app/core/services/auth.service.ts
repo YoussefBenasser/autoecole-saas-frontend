@@ -12,6 +12,7 @@ export class AuthService {
   private readonly ROLE_KEY = 'auth_role';
   private readonly EMAIL_KEY = 'auth_email';
   private readonly TENANT_KEY = 'auth_tenant';
+  private readonly MUST_CHANGE_KEY = 'auth_must_change_password';
 
   constructor(private http: HttpClient, private router: Router) { }
 
@@ -60,6 +61,14 @@ export class AuthService {
             localStorage.removeItem(this.TENANT_KEY);
           }
 
+          // Store mustChangePassword flag (set when superadmin assigns a provisional password)
+          const mustChange = payload.mustChangePassword === true;
+          if (mustChange) {
+            localStorage.setItem(this.MUST_CHANGE_KEY, 'true');
+          } else {
+            localStorage.removeItem(this.MUST_CHANGE_KEY);
+          }
+
         } catch (e) {
           console.error('Failed to decode JWT payload', e);
         }
@@ -72,6 +81,7 @@ export class AuthService {
     localStorage.removeItem(this.ROLE_KEY);
     localStorage.removeItem(this.EMAIL_KEY);
     localStorage.removeItem(this.TENANT_KEY);
+    localStorage.removeItem(this.MUST_CHANGE_KEY);
     this.router.navigate(['/login']);
   }
 
@@ -81,6 +91,22 @@ export class AuthService {
 
   resendSetupLink(email: string) {
     return this.http.post(`${environment.apiUrl}/auth/resend-setup-link`, { email }, { responseType: 'text' });
+  }
+
+  mustChangePassword(): boolean {
+    return localStorage.getItem(this.MUST_CHANGE_KEY) === 'true';
+  }
+
+  clearMustChangePassword(): void {
+    localStorage.removeItem(this.MUST_CHANGE_KEY);
+  }
+
+  changePassword(currentPassword: string, newPassword: string) {
+    return this.http.post(
+      `${environment.apiUrl}/auth/change-password`,
+      { currentPassword, newPassword },
+      { responseType: 'text' }
+    );
   }
 
   getRole(): UserRole | null {
@@ -143,23 +169,28 @@ export class AuthService {
   }
 
   redirectToDashboard(): void {
-      const role = this.getRole();
-      if (role === 'SUPER_ADMIN') {
-        this.router.navigate(['/super-admin/dashboard']);
-      } else if (role === 'TENANT_ADMIN') {
-        this.router.navigate(['/tenant/dashboard']);
-      } else if (role === 'STUDENT') {
-        // If student has no tenant yet, send them to choose a school
-        const hasTenant = this.getTenantId() !== null;
-        if (hasTenant) {
-          this.router.navigate(['/student/dashboard']);
-        } else {
-          this.router.navigate(['/student/choose-school']);
-        }
-      } else if (role === 'MONITOR') {
-        this.router.navigate(['/monitor/dashboard']);
+    const role = this.getRole();
+    if (role === 'SUPER_ADMIN') {
+      this.router.navigate(['/super-admin/dashboard']);
+    } else if (role === 'TENANT_ADMIN') {
+      // If first login with provisional password, force change
+      if (this.mustChangePassword()) {
+        this.router.navigate(['/tenant/change-password']);
       } else {
-        this.router.navigate(['/login']);
+        this.router.navigate(['/tenant/dashboard']);
       }
+    } else if (role === 'STUDENT') {
+      // If student has no tenant yet, send them to choose a school
+      const hasTenant = this.getTenantId() !== null;
+      if (hasTenant) {
+        this.router.navigate(['/student/dashboard']);
+      } else {
+        this.router.navigate(['/student/choose-school']);
+      }
+    } else if (role === 'MONITOR') {
+      this.router.navigate(['/monitor/dashboard']);
+    } else {
+      this.router.navigate(['/login']);
     }
   }
+}
