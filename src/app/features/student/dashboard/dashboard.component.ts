@@ -317,14 +317,14 @@ interface MockTestItem {
               <h2 class="payments-title">Mon Plan de Paiement</h2>
             </div>
             <span class="payments-badge" [class.status-paid]="myPlan.amountRemaining === 0">
-              Reste: {{ myPlan.amountRemaining | number }} DZD
+              Reste: {{ myPlan.amountRemaining | number }} DNT
             </span>
           </div>
           
           <div style="padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08);">
             <div style="color: #e2e8f0;">
-              <p style="margin: 0;"><strong>Total:</strong> {{ myPlan.totalAmount | number }} DZD</p>
-              <p style="margin: 0.25rem 0 0; color: #4ade80;"><strong>Payé:</strong> {{ myPlan.amountPaid | number }} DZD</p>
+              <p style="margin: 0;"><strong>Total:</strong> {{ myPlan.totalAmount | number }} DNT</p>
+              <p style="margin: 0.25rem 0 0; color: #4ade80;"><strong>Payé:</strong> {{ myPlan.amountPaid | number }} DNT</p>
             </div>
             <button class="btn-sm btn-success" (click)="openPaymentModal()" style="padding: 0.5rem 1rem; border-radius: 6px; background: #3b82f6; color: white; border: none; cursor: pointer; font-weight: bold;">+ Déclarer un versement</button>
           </div>
@@ -343,7 +343,7 @@ interface MockTestItem {
               <tbody>
                 <tr *ngFor="let p of myInstallments" class="payment-row">
                   <td class="date-cell">{{ p.paymentDate | date:'dd/MM/yyyy' }}</td>
-                  <td class="amount-cell">{{ p.amount | number }} DZD</td>
+                  <td class="amount-cell">{{ p.amount | number }} DNT</td>
                   <td>{{ p.mode }}</td>
                   <td class="status-cell">
                     <span class="status-badge"
@@ -367,7 +367,7 @@ interface MockTestItem {
             <h3 style="margin-top:0;font-size:1.5rem;font-weight:bold;margin-bottom:0.5rem;">Déclarer un versement</h3>
             <p style="margin-bottom:1.5rem;color:#94a3b8;font-size:0.9rem;">Ce versement devra être approuvé par l'école avant d'être comptabilisé.</p>
             <div style="margin-bottom:1rem;">
-              <label style="display:block;margin-bottom:0.5rem;font-weight:bold;color:#cbd5e1;">Montant (DZD)</label>
+              <label style="display:block;margin-bottom:0.5rem;font-weight:bold;color:#cbd5e1;">Montant (DNT)</label>
               <input type="number" [(ngModel)]="paymentForm.amount" style="width:100%;padding:0.75rem;border:1px solid #475569;border-radius:6px;background:#0f172a;color:white;box-sizing:border-box;" />
             </div>
             <div style="margin-bottom:1.5rem;">
@@ -1464,7 +1464,7 @@ export class DashboardComponent implements OnInit {
           </div>
           <div class="row">
             <div class="label">Montant versé :</div>
-            <div class="value amount-highlight">${installment.amount.toLocaleString('fr-FR')} DZD</div>
+            <div class="value amount-highlight">${installment.amount.toLocaleString('fr-FR')} DNT</div>
           </div>
         </div>
 

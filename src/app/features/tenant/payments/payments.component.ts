@@ -49,7 +49,7 @@ interface PaymentStats { totalRevenue: number; numberOfPayments: number; average
       <div class="stats-grid" *ngIf="stats">
         <div class="stat-card">
           <div class="stat-icon">💰</div>
-          <div><span class="stat-value">{{ stats.totalRevenue | number }} DZD</span><span class="stat-label">Revenus totaux</span></div>
+          <div><span class="stat-value">{{ stats.totalRevenue | number }} DNT</span><span class="stat-label">Revenus totaux</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon">🧾</div>
@@ -57,7 +57,7 @@ interface PaymentStats { totalRevenue: number; numberOfPayments: number; average
         </div>
         <div class="stat-card">
           <div class="stat-icon">📊</div>
-          <div><span class="stat-value">{{ stats.averagePayment | number:'1.0-0' }} DZD</span><span class="stat-label">Moy. paiement</span></div>
+          <div><span class="stat-value">{{ stats.averagePayment | number:'1.0-0' }} DNT</span><span class="stat-label">Moy. paiement</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon">📋</div>
@@ -85,9 +85,9 @@ interface PaymentStats { totalRevenue: number; numberOfPayments: number; average
           <tbody>
             <tr *ngFor="let plan of plans" class="table-row">
               <td class="name-cell">{{ plan.studentName }}</td>
-              <td>{{ plan.totalAmount | number }} DZD</td>
-              <td class="paid-cell">{{ plan.amountPaid | number }} DZD</td>
-              <td [class.overdue]="plan.amountRemaining > 0">{{ plan.amountRemaining | number }} DZD</td>
+              <td>{{ plan.totalAmount | number }} DNT</td>
+              <td class="paid-cell">{{ plan.amountPaid | number }} DNT</td>
+              <td [class.overdue]="plan.amountRemaining > 0">{{ plan.amountRemaining | number }} DNT</td>
               <td>
                 <div class="progress-bar">
                   <div class="progress-fill" [style.width]="getProgress(plan) + '%'"></div>
@@ -119,7 +119,7 @@ interface PaymentStats { totalRevenue: number; numberOfPayments: number; average
           <tbody>
             <tr *ngFor="let i of selectedPlanInstallments">
               <td>{{ i.paymentDate | date:'dd/MM/yyyy' }}</td>
-              <td class="paid-cell">{{ i.amount | number }} DZD</td>
+              <td class="paid-cell">{{ i.amount | number }} DNT</td>
               <td>{{ i.mode }}</td>
               <td>
                 <span class="status-badge" [class.status-paid]="i.status === 'APPROVED'" [class.status-pending]="i.status === 'PENDING'">
@@ -156,7 +156,7 @@ interface PaymentStats { totalRevenue: number; numberOfPayments: number; average
               </select>
             </div>
             <div class="form-group">
-              <label>Montant total (DZD)</label>
+              <label>Montant total (DNT)</label>
               <input type="number" [(ngModel)]="planForm.totalAmount" class="form-input" placeholder="Ex: 25000" min="1" />
             </div>
             <div class="form-group">
@@ -181,10 +181,10 @@ interface PaymentStats { totalRevenue: number; numberOfPayments: number; average
             <button (click)="showInstallmentModal=false">✕</button>
           </div>
           <p class="modal-sub">Pour : <strong>{{ selectedPlanForInstallment?.studentName }}</strong></p>
-          <p class="modal-sub">Restant : <strong class="amount-due">{{ selectedPlanForInstallment?.amountRemaining | number }} DZD</strong></p>
+          <p class="modal-sub">Restant : <strong class="amount-due">{{ selectedPlanForInstallment?.amountRemaining | number }} DNT</strong></p>
           <div class="modal-body">
             <div class="form-group">
-              <label>Montant versé (DZD)</label>
+              <label>Montant versé (DNT)</label>
               <input type="number" [(ngModel)]="installmentForm.amount" class="form-input" placeholder="Ex: 5000" min="1" />
             </div>
             <div class="form-group">
@@ -427,12 +427,12 @@ export class PaymentsComponent implements OnInit {
           </div>
           <div class="row">
             <div class="label">Montant versé :</div>
-            <div class="value amount-highlight">${installment.amount.toLocaleString('fr-FR')} DZD</div>
+            <div class="value amount-highlight">${installment.amount.toLocaleString('fr-FR')} DNT</div>
           </div>
           <div class="row">
             <div class="label">Plan de paiement :</div>
-            <div class="value">Total: ${this.selectedPlan.totalAmount.toLocaleString('fr-FR')} DZD<br>
-              <span style="font-size:12px; color:#666;">(Reste à payer : ${this.selectedPlan.amountRemaining.toLocaleString('fr-FR')} DZD)</span>
+            <div class="value">Total: ${this.selectedPlan.totalAmount.toLocaleString('fr-FR')} DNT<br>
+              <span style="font-size:12px; color:#666;">(Reste à payer : ${this.selectedPlan.amountRemaining.toLocaleString('fr-FR')} DNT)</span>
             </div>
           </div>
         </div>

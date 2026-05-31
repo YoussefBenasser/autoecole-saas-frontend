@@ -180,7 +180,7 @@ interface AuditLog {
           <tbody>
             <tr *ngFor="let p of recentPayments" style="border-top: 1px solid rgba(255, 255, 255, 0.08); transition: all 0.2s ease;">
               <td style="padding: 1rem 2rem; color: rgba(255, 255, 255, 0.9); font-size: 0.9rem;">{{ p.studentName || '—' }}</td>
-              <td style="padding: 1rem 2rem; color: #22c55e; font-weight: 600; font-size: 0.9rem;">{{ p.amount | number }} DZD</td>
+              <td style="padding: 1rem 2rem; color: #22c55e; font-weight: 600; font-size: 0.9rem;">{{ p.amount | number }} DNT</td>
               <td style="padding: 1rem 2rem; color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">{{ (p.paymentDate || p.date) | date:'dd/MM/yyyy' }}</td>
               <td style="padding: 1rem 2rem;">
                 <span class="status-badge" [ngClass]="p.status === 'PAID' ? 'approved' : 'pending'">
@@ -321,7 +321,7 @@ export class TenantDashboardComponent implements OnInit {
 
     this.tenantService.getTenantStats().subscribe({
       next: (data: TenantStatsApi) => {
-        this.passRate = Math.round(data.globalPassRate * 100);
+        this.passRate = Math.round(data.globalPassRate);
         this.avgScore = data.averageScorePerMonth;
         this.hardestCategories = Object.entries(data.hardestCategories)
           .map(([key, value]) => ({ key, count: Number(value) }))

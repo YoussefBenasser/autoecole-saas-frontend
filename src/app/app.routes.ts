@@ -80,6 +80,11 @@ export const routes: Routes = [
           import('./features/super-admin/audit-logs/audit-logs.component').then(m => m.SuperAdminAuditLogsComponent)
       },
       {
+        path: 'analytics',
+        loadComponent: () =>
+          import('./features/super-admin/analytics/analytics.component').then(m => m.SuperAdminAnalyticsComponent)
+      },
+      {
         path: 'profile',
         loadComponent: () =>
           import('./shared/profile/profile.component').then(m => m.ProfileComponent)
@@ -128,6 +133,11 @@ export const routes: Routes = [
         path: 'audit',
         loadComponent: () =>
           import('./features/tenant/audit-logs/audit-logs.component').then(m => m.TenantAuditLogsComponent)
+      },
+      {
+        path: 'analytics',
+        loadComponent: () =>
+          import('./features/tenant/analytics/analytics.component').then(m => m.TenantAnalyticsComponent)
       },
       {
         path: 'change-password',

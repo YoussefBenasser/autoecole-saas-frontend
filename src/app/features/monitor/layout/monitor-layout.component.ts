@@ -63,6 +63,41 @@ import { environment } from '../../../../environments/environment';
             </div>
           </div>
 
+          <!-- Notifications (Sessions) Icon & Popup -->
+          <div class="nav-action-container" (click)="toggleNotifications($event)">
+            <button class="action-icon-btn" [class.active]="isNotificationsOpen" title="Notifications">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+              </svg>
+              <span class="notification-badge" *ngIf="plannedSessions.length > 0">{{ plannedSessions.length }}</span>
+            </button>
+            <div class="action-dropdown" [class.show]="isNotificationsOpen">
+              <div class="dropdown-header">
+                <h3>Notifications</h3>
+                <a routerLink="/monitor/sessions" class="header-link">Tout voir</a>
+              </div>
+              <div class="dropdown-content">
+                <div *ngIf="plannedSessions.length === 0" class="empty-state">
+                  <div class="empty-icon-wrapper">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+                  </div>
+                  <p>Aucune notification</p>
+                </div>
+                <div class="notification-list" *ngIf="plannedSessions.length > 0">
+                  <div class="notification-item" *ngFor="let s of plannedSessions">
+                    <div class="notification-icon" style="background: rgba(20, 184, 166, 0.2); color: #2dd4bf;">
+                      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    </div>
+                    <div class="notification-details">
+                      <p class="notification-title">Séance à confirmer</p>
+                      <p class="notification-desc">Le {{ formatDate(s.sessionDate) }} à {{ formatTime(s.startTime) }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- User Profile Dropdown -->
           <div class="user-profile-container" (click)="toggleDropdown($event)">
             <div class="user-profile">
@@ -386,6 +421,61 @@ import { environment } from '../../../../environments/environment';
         font-size: 0.9rem;
       }
 
+      /* Notification List Items */
+      .notification-list {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .notification-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        transition: background 0.2s;
+      }
+
+      .notification-item:hover {
+        background: rgba(255,255,255,0.03);
+      }
+
+      .notification-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .notification-icon svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      .notification-details {
+        flex: 1;
+        overflow: hidden;
+      }
+
+      .notification-title {
+        margin: 0 0 0.25rem 0;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #f8fafc;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .notification-desc {
+        margin: 0;
+        font-size: 0.8rem;
+        color: #94a3b8;
+      }
+
       /* Profile Dropdown Container */
       .user-profile-container {
         position: relative;
@@ -620,6 +710,9 @@ export class MonitorLayoutComponent implements OnInit, OnDestroy {
   initials = '';
   isDropdownOpen = false;
   isMessagesOpen = false;
+  isNotificationsOpen = false;
+
+  plannedSessions: any[] = [];
 
   unreadMessageCount = 0;
   private messagePollInterval: any;
@@ -635,6 +728,15 @@ export class MonitorLayoutComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    this.http.get<any>(`${environment.apiUrl}/profile/me`).subscribe({
+      next: (profile) => {
+        if (profile.monitorId) {
+          this.loadSessions(profile.monitorId);
+        }
+      },
+      error: () => {}
+    });
+
     this.loadUnreadMessages();
     this.messagePollInterval = setInterval(() => {
       this.loadUnreadMessages();
@@ -651,6 +753,19 @@ export class MonitorLayoutComponent implements OnInit, OnDestroy {
     this.http.get<{count: number}>(`${environment.apiUrl}/messages/unread-count`).subscribe({
       next: (res) => {
         this.unreadMessageCount = res.count;
+      },
+      error: () => {}
+    });
+  }
+
+  loadSessions(monitorId: string): void {
+    this.http.get<any[]>(`${environment.apiUrl}/monitor/sessions?monitorId=${monitorId}`).subscribe({
+      next: (data) => {
+        this.plannedSessions = data.filter(s => s.status === 'PLANNED').sort((a, b) => {
+          const dateCompare = new Date(a.sessionDate).getTime() - new Date(b.sessionDate).getTime();
+          if (dateCompare !== 0) return dateCompare;
+          return (a.startTime || '').localeCompare(b.startTime || '');
+        });
       },
       error: () => {}
     });
@@ -677,6 +792,7 @@ export class MonitorLayoutComponent implements OnInit, OnDestroy {
     
     if (!clickedInsideAction) {
       this.isMessagesOpen = false;
+      this.isNotificationsOpen = false;
     }
   }
 
@@ -684,12 +800,35 @@ export class MonitorLayoutComponent implements OnInit, OnDestroy {
     event.stopPropagation();
     this.isDropdownOpen = !this.isDropdownOpen;
     this.isMessagesOpen = false;
+    this.isNotificationsOpen = false;
   }
 
   toggleMessages(event: Event) {
     event.stopPropagation();
     this.isMessagesOpen = !this.isMessagesOpen;
     this.isDropdownOpen = false;
+    this.isNotificationsOpen = false;
+  }
+
+  toggleNotifications(event: Event) {
+    event.stopPropagation();
+    this.isNotificationsOpen = !this.isNotificationsOpen;
+    this.isMessagesOpen = false;
+    this.isDropdownOpen = false;
+  }
+
+  formatDate(dateStr: string): string {
+    if (!dateStr) return '—';
+    try {
+      const d = new Date(dateStr + 'T00:00:00');
+      return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+    } catch { return dateStr; }
+  }
+
+  formatTime(timeStr: string): string {
+    if (!timeStr) return '—';
+    const parts = timeStr.split(':');
+    return `${parts[0]}:${parts[1]}`;
   }
 
   logout(): void {
