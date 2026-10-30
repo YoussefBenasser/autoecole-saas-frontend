@@ -70,20 +70,6 @@ import { filter } from 'rxjs/operators';
                 </div>
                 <svg class="option-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
               </a>
-
-              <a routerLink="/register/monitor" class="option-card">
-                <div class="option-icon monitor">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M16 7a4 4 0 1 1 0-8 4 4 0 0 1 0 8zM1 20.6v-2a6 6 0 0 1 6-6h3"/>
-                  </svg>
-                </div>
-                <div class="option-info">
-                  <h3>Moniteur</h3>
-                  <p>Gérez vos élèves et planifiez les sessions de conduite.</p>
-                </div>
-                <svg class="option-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-              </a>
-
               <a routerLink="/register/tenant" class="option-card">
                 <div class="option-icon tenant">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -98,6 +84,7 @@ import { filter } from 'rxjs/operators';
                 </div>
                 <svg class="option-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
               </a>
+
             </div>
 
             <div class="form-footer">

@@ -14,6 +14,7 @@ interface Monitor {
   lastName?: string;
   email?: string;
   telephone?: string;
+  profilePictureUrl?: string | null;
   // Nested user object also may be present
   user?: {
     prenom?: string;
@@ -22,6 +23,7 @@ interface Monitor {
     lastName?: string;
     email?: string;
     telephone?: string;
+    profilePictureUrl?: string | null;
   };
 }
 
@@ -96,7 +98,8 @@ interface Monitor {
       <div *ngIf="!isLoading && filteredMonitors.length > 0" class="monitors-grid">
         <div *ngFor="let m of filteredMonitors; let i = index" class="monitor-card" [style.animation-delay]="(i * 0.06) + 's'">
           <div class="card-top">
-            <div class="avatar avatar-cyan">
+            <img *ngIf="getAvatarUrl(m)" [src]="getAvatarUrl(m)" class="avatar avatar-img" (error)="onAvatarError(m)" alt="Photo" />
+            <div class="avatar avatar-cyan" *ngIf="!getAvatarUrl(m)">
               {{ (m.prenom || m.firstName || m.user?.prenom || m.user?.firstName)?.charAt(0) || 'M' }}{{ (m.nom || m.lastName || m.user?.nom || m.user?.lastName)?.charAt(0) || '' }}
             </div>
             <div class="status-dot active" title="Actif"></div>
@@ -416,6 +419,11 @@ interface Monitor {
       box-shadow: 0 6px 16px rgba(6, 182, 212, 0.3);
     }
 
+    .avatar-img {
+      object-fit: cover;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+
     .status-dot {
       width: 10px;
       height: 10px;
@@ -694,13 +702,28 @@ export class MonitorsComponent implements OnInit {
     );
   }
 
+  getAvatarUrl(monitor: Monitor): string | null {
+    const pic = monitor.profilePictureUrl || monitor.user?.profilePictureUrl;
+    if (!pic) return null;
+    if (pic.startsWith('http://') || pic.startsWith('https://')) return pic;
+    return `${environment.apiUrl}${pic.startsWith('/') ? '' : '/'}${pic}`;
+  }
+
+  onAvatarError(monitor: any): void {
+    if (monitor) {
+      monitor.profilePictureUrl = null;
+      if (monitor.user) monitor.user.profilePictureUrl = null;
+    }
+  }
+
   private normalizeMonitor(raw: any): Monitor {
     return {
       ...raw,
       prenom: raw.prenom || raw.firstName || raw.user?.prenom || raw.user?.firstName || '',
       nom: raw.nom || raw.lastName || raw.user?.nom || raw.user?.lastName || '',
       email: raw.email || raw.user?.email || '',
-      telephone: raw.telephone || raw.user?.telephone || ''
+      telephone: raw.telephone || raw.user?.telephone || '',
+      profilePictureUrl: raw.profilePictureUrl || raw.user?.profilePictureUrl || null
     };
   }
 

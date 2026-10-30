@@ -68,33 +68,33 @@ type ExamPhase = 'loading' | 'intro' | 'exam' | 'submitting' | 'result' | 'corre
       <!-- ===== ERROR PHASE ===== -->
       <div *ngIf="phase === 'error'" class="error-card">
         <div class="error-icon">⚠️</div>
-        <h2 class="error-title">Impossible de charger l'examen</h2>
+        <h2 class="error-title">تعذّر تحميل الامتحان</h2>
         <p class="error-text">{{ errorMsg }}</p>
-        <button (click)="restartExam()" class="retry-btn">🔄 Réessayer</button>
+        <button (click)="restartExam()" class="retry-btn">🔄 إعادة المحاولة</button>
       </div>
 
       <!-- ===== INTRO PHASE ===== -->
       <div *ngIf="phase === 'intro'" class="intro-card">
         <div class="intro-icon">📝</div>
-        <h1 class="intro-title">Examen Théorique (Code)</h1>
-        <p class="intro-subtitle">Test de connaissance — {{ questions.length }} questions</p>
+        <h1 class="intro-title">الامتحان النظري</h1>
+        <p class="intro-subtitle">اختبار المعلومات — 10 اسألة تقريباً</p>
         
         <div class="intro-stats">
           <div class="stat-box">
-            <div class="stat-value">{{ questions.length }}</div>
-            <div class="stat-label">Questions</div>
+            <div class="stat-value">~10</div>
+            <div class="stat-label">سؤال</div>
           </div>
           <div class="stat-box">
             <div class="stat-value success">75%</div>
-            <div class="stat-label">Score minimum</div>
+            <div class="stat-label">الحد الأدنى للنجاح</div>
           </div>
           <div class="stat-box">
             <div class="stat-value">∞</div>
-            <div class="stat-label">Temps libre</div>
+            <div class="stat-label">وقت حر</div>
           </div>
         </div>
 
-        <button (click)="startExam()" class="start-btn">🚀 Commencer l'examen</button>
+        <button (click)="startExam()" class="start-btn">🚀 ابدأ الامتحان</button>
       </div>
 
       <!-- ===== EXAM PHASE ===== -->
@@ -102,12 +102,12 @@ type ExamPhase = 'loading' | 'intro' | 'exam' | 'submitting' | 'result' | 'corre
         <!-- Header -->
         <div class="exam-header">
           <div>
-            <h1 class="exam-title">Examen Théorique</h1>
-            <p class="exam-subtitle">Répondez à toutes les questions avant de soumettre</p>
+            <h1 class="exam-title">الامتحان النظري</h1>
+            <p class="exam-subtitle">أجب على جميع الأسئلة قبل التسليم</p>
           </div>
           <div class="question-progress">
             <div class="progress-number">{{ currentQuestionIndex + 1 }}<span class="progress-total">/{{ questions.length }}</span></div>
-            <div class="progress-answered">{{ answeredCount }} répondu(s)</div>
+            <div class="progress-answered">{{ answeredCount }} إجابة</div>
           </div>
         </div>
 
@@ -120,7 +120,7 @@ type ExamPhase = 'loading' | 'intro' | 'exam' | 'submitting' | 'result' | 'corre
         <div class="question-card">
           <!-- Category tag -->
           <div class="question-meta">
-            <span class="category-tag">{{ currentQuestion.category || 'Général' }}</span>
+            <span class="category-tag">{{ currentQuestion.category || 'عام' }}</span>
             <span *ngIf="currentQuestion.difficulty" class="difficulty-tag"
                   [ngClass]="'diff-' + currentQuestion.difficulty">
               {{ getDifficultyLabel(currentQuestion.difficulty || 'medium') }}
@@ -155,16 +155,19 @@ type ExamPhase = 'loading' | 'intro' | 'exam' | 'submitting' | 'result' | 'corre
         <!-- Navigation -->
         <div class="nav-controls">
           <button (click)="previousQuestion()" [disabled]="currentQuestionIndex === 0" class="nav-btn nav-prev">
-            ← Précédent
+            ← السابق
           </button>
 
           <!-- Question dot navigation -->
           <div class="question-dots">
             <button *ngFor="let q of questions; let i = index"
+                    type="button"
                     (click)="goToQuestion(i)"
+                    [disabled]="!canGoToQuestion(i)"
                     class="dot"
                     [class.current]="i === currentQuestionIndex"
-                    [class.answered]="answers[q.id]">
+                    [class.answered]="answers[q.id]"
+                    [class.locked]="!canGoToQuestion(i)">
               {{ i + 1 }}
             </button>
           </div>
@@ -172,15 +175,16 @@ type ExamPhase = 'loading' | 'intro' | 'exam' | 'submitting' | 'result' | 'corre
           <div class="nav-right">
             <button *ngIf="currentQuestionIndex < questions.length - 1"
                     (click)="nextQuestion()"
+                    [disabled]="!isCurrentAnswered"
                     class="nav-btn nav-next">
-              Suivant →
+              التالي →
             </button>
 
             <button *ngIf="currentQuestionIndex === questions.length - 1 || answeredCount === questions.length"
                     (click)="submitTest()"
                     [disabled]="answeredCount === 0"
                     class="submit-btn">
-              ✅ Soumettre ({{ answeredCount }}/{{ questions.length }})
+              ✅ تسليم ({{ answeredCount }}/{{ questions.length }})
             </button>
           </div>
         </div>
@@ -192,7 +196,7 @@ type ExamPhase = 'loading' | 'intro' | 'exam' | 'submitting' | 'result' | 'corre
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
         </svg>
-        <p class="submitting-text">Correction en cours...</p>
+        <p class="submitting-text">جارٍ التصحيح...</p>
       </div>
 
       <!-- ===== RESULT PHASE ===== -->
@@ -204,42 +208,42 @@ type ExamPhase = 'loading' | 'intro' | 'exam' | 'submitting' | 'result' | 'corre
 
         <!-- Result title -->
         <h2 class="result-title">
-          {{ result.passed ? 'Félicitations !' : 'Continuez vos révisions !' }}
+          {{ result.passed ? 'تهانينا! 🎉' : 'واصل المراجعة!' }}
         </h2>
         <p class="result-message">
-          {{ result.passed ? "Vous avez réussi l'examen théorique." : "Vous pouvez repasser l'examen à tout moment." }}
+          {{ result.passed ? 'لقد نجحت في الامتحان النظري.' : 'يمكنك إعادة الامتحان في أي وقت.' }}
         </p>
 
         <!-- Score display -->
         <div class="score-display">
           <div class="score-item">
             <div class="score-number" [class.passed]="result.passed">{{ result.score }}</div>
-            <div class="score-label">Score</div>
+            <div class="score-label">النقاط</div>
           </div>
           <div class="score-divider">/</div>
           <div class="score-item">
             <div class="score-number">{{ result.totalQuestions }}</div>
-            <div class="score-label">Total</div>
+            <div class="score-label">المجموع</div>
           </div>
           <div class="score-divider-vertical"></div>
           <div class="score-item">
             <div class="score-number" [class.passed]="result.passed">{{ getScorePercent() }}%</div>
-            <div class="score-label">Résultat</div>
+            <div class="score-label">النتيجة</div>
           </div>
         </div>
 
         <!-- Badge -->
         <span class="result-badge" [class.passed]="result.passed">
-          {{ result.passed ? '✅ ADMIS (≥ 75%)' : '❌ REFUSÉ (< 75%)' }}
+          {{ result.passed ? '✅ ناجح (≥ 75%)' : '❌ راسب (< 75%)' }}
         </span>
 
         <!-- Actions -->
         <div class="result-actions">
           <button *ngIf="result.corrections && result.corrections.length > 0"
                   (click)="showCorrection()"
-                  class="action-btn correction-btn">📋 Voir la correction</button>
-          <button (click)="restartExam()" class="action-btn retry-btn">🔄 Repasser l'examen</button>
-          <a routerLink="/student/exams" class="action-btn back-btn">← Retour aux examens</a>
+                  class="action-btn correction-btn">📋 عرض التصحيح</button>
+          <button (click)="restartExam()" class="action-btn retry-btn">🔄 إعادة الامتحان</button>
+          <a routerLink="/student/exams" class="action-btn back-btn">← العودة إلى الامتحانات</a>
         </div>
       </div>
 
@@ -247,15 +251,15 @@ type ExamPhase = 'loading' | 'intro' | 'exam' | 'submitting' | 'result' | 'corre
       <div *ngIf="phase === 'correction' && result" class="correction-phase">
         <div class="correction-header">
           <div>
-            <h1 class="correction-title">📋 Correction détaillée</h1>
+            <h1 class="correction-title">📋 التصحيح التفصيلي</h1>
             <p class="correction-subtitle">
-              Score : <strong>{{ result.score }}/{{ result.totalQuestions }}</strong> —
+              النقاط: <strong>{{ result.score }}/{{ result.totalQuestions }}</strong> —
               <span [class.text-passed]="result.passed" [class.text-failed]="!result.passed">
-                {{ result.passed ? 'ADMIS' : 'REFUSÉ' }}
+                {{ result.passed ? 'ناجح' : 'راسب' }}
               </span>
             </p>
           </div>
-          <button (click)="phase = 'result'" class="nav-btn">← Retour au résultat</button>
+          <button (click)="phase = 'result'" class="nav-btn">← العودة إلى النتيجة</button>
         </div>
 
         <div class="corrections-list">
@@ -281,11 +285,11 @@ type ExamPhase = 'loading' | 'intro' | 'exam' | 'submitting' | 'result' | 'corre
 
               <div class="answer-row">
                 <div class="answer-block your-answer" [class.wrong]="!c.isCorrect">
-                  <div class="answer-label">Votre réponse</div>
+                  <div class="answer-label">إجابتك</div>
                   <div class="answer-value">{{ c.selectedOptionText }}</div>
                 </div>
                 <div *ngIf="!c.isCorrect" class="answer-block correct-answer">
-                  <div class="answer-label">Bonne réponse</div>
+                  <div class="answer-label">الإجابة الصحيحة</div>
                   <div class="answer-value">{{ c.correctOptionText }}</div>
                 </div>
               </div>
@@ -299,8 +303,8 @@ type ExamPhase = 'loading' | 'intro' | 'exam' | 'submitting' | 'result' | 'corre
         </div>
 
         <div class="correction-footer">
-          <button (click)="restartExam()" class="action-btn retry-btn">🔄 Repasser l'examen</button>
-          <a routerLink="/student/dashboard" class="action-btn back-btn">← Tableau de bord</a>
+          <button (click)="restartExam()" class="action-btn retry-btn">🔄 إعادة الامتحان</button>
+          <a routerLink="/student/dashboard" class="action-btn back-btn">← لوحة التحكم</a>
         </div>
       </div>
 
@@ -755,6 +759,15 @@ type ExamPhase = 'loading' | 'intro' | 'exam' | 'submitting' | 'result' | 'corre
 
     .dot:hover {
       background: rgba(255, 255, 255, 0.1);
+    }
+
+    .dot:disabled,
+    .dot.locked {
+      opacity: 0.35;
+      cursor: not-allowed;
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.06);
+      color: rgba(255, 255, 255, 0.3);
     }
 
     .dot.current {
@@ -1234,7 +1247,7 @@ type ExamPhase = 'loading' | 'intro' | 'exam' | 'submitting' | 'result' | 'corre
 })
 export class TheoreticalExamComponent implements OnInit {
   phase: ExamPhase = 'loading';
-  loadingMessage = 'Chargement du profil...';
+  loadingMessage = 'جارٍ تحميل الملف الشخصي...';
   errorMsg = '';
 
   questions: Question[] = [];
@@ -1246,7 +1259,7 @@ export class TheoreticalExamComponent implements OnInit {
   testId = '';
   result: MockTestResult | null = null;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   ngOnInit(): void {
     this.loadProfile();
@@ -1254,26 +1267,26 @@ export class TheoreticalExamComponent implements OnInit {
 
   private loadProfile(): void {
     this.phase = 'loading';
-    this.loadingMessage = 'Chargement du profil...';
+    this.loadingMessage = 'جارٍ تحميل الملف الشخصي...';
     this.http.get<any>(`${environment.apiUrl}/profile/me`).subscribe({
       next: (profile) => {
         if (profile.studentId) {
           this.studentId = profile.studentId;
-          this.loadQuestions();
+          this.phase = 'intro';
         } else {
           this.phase = 'error';
-          this.errorMsg = 'Profil élève introuvable. Vérifiez votre compte.';
+          this.errorMsg = 'الملف الشخصي للطالب غير موجود. يرجى التحقق من حسابك.';
         }
       },
       error: () => {
         this.phase = 'error';
-        this.errorMsg = 'Impossible de récupérer votre profil. Vérifiez votre connexion.';
+        this.errorMsg = 'تعذّر الوصول إلى ملفك الشخصي. تحقق من اتصالك بالإنترنت.';
       }
     });
   }
 
   private loadQuestions(): void {
-    this.loadingMessage = 'Préparation de l\'examen...';
+    this.loadingMessage = 'جارٍ تجهيز الامتحان...';
     this.http.post<StartMockTestResponse>(
       `${environment.apiUrl}/student/mock-tests/start?studentId=${this.studentId}`,
       {}
@@ -1281,57 +1294,6 @@ export class TheoreticalExamComponent implements OnInit {
       next: (response) => {
         this.testId = response.mockTestId;
         const hardcodedQuestions: Question[] = [
-          {
-            id: 'a1111111-1111-1111-1111-111111111111',
-            category: 'CIRCULATION',
-            questionText: 'Je peux dépasser par la droite :',
-            difficulty: 'easy',
-            options: [
-              { id: 'b1111111-1111-1111-1111-111111111111', optionText: 'Oui' },
-              { id: 'b1111112-1111-1111-1111-111111111111', optionText: 'Non' }
-            ]
-          },
-          {
-            id: 'a2222222-2222-2222-2222-222222222222',
-            category: 'SECURITY',
-            questionText: 'Le taux dalcoolémie maximal autorisé pour un conducteur novice est de :',
-            difficulty: 'easy',
-            options: [
-              { id: 'b2222221-2222-2222-2222-222222222222', optionText: '0.2 g/l' },
-              { id: 'b2222222-2222-2222-2222-222222222222', optionText: '0.5 g/l' }
-            ]
-          },
-          {
-            id: 'a3333333-3333-3333-3333-333333333333',
-            category: 'CIRCULATION',
-            questionText: 'La distance de sécurité minimale en agglomération dépend :',
-            difficulty: 'easy',
-            options: [
-              { id: 'b3333331-3333-3333-3333-333333333333', optionText: 'De la vitesse' },
-              { id: 'b3333332-3333-3333-3333-333333333333', optionText: 'Du marquage' }
-            ]
-          },
-          {
-            id: 'a4444444-4444-4444-4444-444444444444',
-            category: 'SIGNALISATION',
-            questionText: 'Que signifie ce panneau ? (Octogone rouge)',
-            difficulty: 'easy',
-            imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Zeichen_206_-_Halt%21_Vorfahrt_gew%C3%A4hren%21%2C_StVO_1970.svg/200px-Zeichen_206_-_Halt%21_Vorfahrt_gew%C3%A4hren%21%2C_StVO_1970.svg.png',
-            options: [
-              { id: 'b4444441-4444-4444-4444-444444444444', optionText: 'Cédez le passage' },
-              { id: 'b4444442-4444-4444-4444-444444444444', optionText: 'Arrêt obligatoire (STOP)' }
-            ]
-          },
-          {
-            id: 'a5555555-5555-5555-5555-555555555555',
-            category: 'SECURITY',
-            questionText: "L'utilisation du téléphone au volant est autorisée avec :",
-            difficulty: 'easy',
-            options: [
-              { id: 'b5555551-5555-5555-5555-555555555555', optionText: 'Le système Bluetooth intégré' },
-              { id: 'b5555552-5555-5555-5555-555555555555', optionText: 'Des écouteurs' }
-            ]
-          },
           {
             id: 'a6666666-6666-6666-6666-666666666666',
             category: 'CIRCULATION',
@@ -1373,93 +1335,94 @@ export class TheoreticalExamComponent implements OnInit {
             ]
           },
           {
-            id: 'a10101010-1010-1010-1010-101010101010',
+            id: 'a0100000-0000-0000-0000-000000000000',
             category: 'SECURITY',
             questionText: 'هل يمكن السياقة بدون رخصة؟',
             difficulty: 'easy',
             options: [
-              { id: 'b10101011-1010-1010-1010-101010101010', optionText: 'نعم' },
-              { id: 'b10101012-1010-1010-1010-101010101010', optionText: 'لا' }
+              { id: 'b0100001-0000-0000-0000-000000000000', optionText: 'نعم' },
+              { id: 'b0100002-0000-0000-0000-000000000000', optionText: 'لا' }
             ]
           },
           {
-            id: 'a11111111-1111-1111-1111-111111111112',
+            id: 'a0110000-0000-0000-0000-000000000000',
             category: 'SIGNALISATION',
             questionText: 'ماذا تعني علامة ممنوع الوقوف؟',
             difficulty: 'easy',
             options: [
-              { id: 'b11111112-1111-1111-1111-111111111112', optionText: 'ممنوع الوقوف والتوقف' },
-              { id: 'b11111113-1111-1111-1111-111111111112', optionText: 'مسموح الوقوف' }
+              { id: 'b0110001-0000-0000-0000-000000000000', optionText: 'ممنوع الوقوف والتوقف' },
+              { id: 'b0110002-0000-0000-0000-000000000000', optionText: 'مسموح الوقوف' }
             ]
           },
           {
-            id: 'a12121212-1212-1212-1212-121212121212',
+            id: 'a0120000-0000-0000-0000-000000000000',
             category: 'SECURITY',
             questionText: 'متى يجب تشغيل الأضواء؟',
             difficulty: 'easy',
             options: [
-              { id: 'b12121213-1212-1212-1212-121212121212', optionText: 'في الليل أو عند ضعف الرؤية' },
-              { id: 'b12121214-1212-1212-1212-121212121212', optionText: 'فقط في النهار' }
+              { id: 'b0120001-0000-0000-0000-000000000000', optionText: 'في الليل أو عند ضعف الرؤية' },
+              { id: 'b0120002-0000-0000-0000-000000000000', optionText: 'فقط في النهار' }
             ]
           },
           {
-            id: 'a13131313-1313-1313-1313-131313131313',
+            id: 'a0130000-0000-0000-0000-000000000000',
             category: 'CIRCULATION',
             questionText: 'ما هي الأولوية عند مفترق الطرق؟',
             difficulty: 'medium',
             options: [
-              { id: 'b13131314-1313-1313-1313-131313131313', optionText: 'الأولوية لليمين' },
-              { id: 'b13131315-1313-1313-1313-131313131313', optionText: 'الأولوية لليسار' }
+              { id: 'b0130001-0000-0000-0000-000000000000', optionText: 'الأولوية لليمين' },
+              { id: 'b0130002-0000-0000-0000-000000000000', optionText: 'الأولوية لليسار' }
             ]
           },
           {
-            id: 'a14141414-1414-1414-1414-141414141414',
+            id: 'a0140000-0000-0000-0000-000000000000',
             category: 'SECURITY',
             questionText: 'هل يجب احترام إشارات المرور دائماً؟',
             difficulty: 'easy',
             options: [
-              { id: 'b14141415-1414-1414-1414-141414141414', optionText: 'نعم' },
-              { id: 'b14141416-1414-1414-1414-141414141414', optionText: 'لا' }
+              { id: 'b0140001-0000-0000-0000-000000000000', optionText: 'نعم' },
+              { id: 'b0140002-0000-0000-0000-000000000000', optionText: 'لا' }
             ]
           },
           {
-            id: 'a15151515-1515-1515-1515-151515151515',
+            id: 'a0150000-0000-0000-0000-000000000000',
             category: 'CIRCULATION',
             questionText: 'ما هو الحد الأقصى للسرعة في الطرقات السيارة؟',
             difficulty: 'medium',
             options: [
-              { id: 'b15151516-1515-1515-1515-151515151515', optionText: '110 كم/س' },
-              { id: 'b15151517-1515-1515-1515-151515151515', optionText: '130 كم/س' }
+              { id: 'b0150001-0000-0000-0000-000000000000', optionText: '110 كم/س' },
+              { id: 'b0150002-0000-0000-0000-000000000000', optionText: '130 كم/س' }
             ]
           }
         ];
-        
+
         // Only add hardcoded questions that are NOT already returned by the backend (avoid duplicates)
         const backendIds = new Set(response.questions.map((q: Question) => q.id));
         const newQuestions = hardcodedQuestions.filter(q => !backendIds.has(q.id));
         this.questions = [...response.questions, ...newQuestions];
-        
+
         if (this.questions.length === 0) {
           this.phase = 'error';
-          this.errorMsg = 'Aucune question disponible pour le moment. Contactez votre auto-école.';
+          this.errorMsg = 'لا توجد أسئلة متاحة حالياً. يرجى التواصل مع مدرستك.';
           return;
         }
         // Reset state
         this.currentQuestionIndex = 0;
         this.answers = {};
         this.result = null;
-        this.phase = 'intro';
+        this.phase = 'exam';
       },
       error: (err) => {
         this.phase = 'error';
-        this.errorMsg = 'Impossible de charger les questions: ' + (err.error?.message || err.message || 'Erreur serveur');
+        this.errorMsg = 'تعذّر تحميل الأسئلة: ' + (err.error?.message || err.message || 'خطأ في الخادم');
       }
     });
   }
 
   startExam(): void {
-    this.phase = 'exam';
-    this.currentQuestionIndex = 0;
+    this.phase = 'loading';
+    this.loadingMessage = 'جارٍ تجهيز الامتحان...';
+    this.loadQuestions();
   }
 
   restartExam(): void {
@@ -1487,15 +1450,35 @@ export class TheoreticalExamComponent implements OnInit {
     this.answers[questionId] = optionId;
   }
 
+  get isCurrentAnswered(): boolean {
+    return !!this.answers[this.currentQuestion.id];
+  }
+
+  canGoToQuestion(index: number): boolean {
+    if (index <= this.currentQuestionIndex) {
+      return true;
+    }
+    for (let i = 0; i < index; i++) {
+      if (!this.answers[this.questions[i].id]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   previousQuestion(): void {
     if (this.currentQuestionIndex > 0) this.currentQuestionIndex--;
   }
 
   nextQuestion(): void {
+    if (!this.isCurrentAnswered) return;
     if (this.currentQuestionIndex < this.questions.length - 1) this.currentQuestionIndex++;
   }
 
   goToQuestion(index: number): void {
+    if (!this.canGoToQuestion(index)) {
+      return;
+    }
     this.currentQuestionIndex = index;
   }
 
@@ -1506,9 +1489,9 @@ export class TheoreticalExamComponent implements OnInit {
 
   getDifficultyLabel(difficulty: string): string {
     switch (difficulty) {
-      case 'easy': return 'Facile';
-      case 'medium': return 'Moyen';
-      case 'hard': return 'Difficile';
+      case 'easy': return 'سهل';
+      case 'medium': return 'متوسط';
+      case 'hard': return 'صعب';
       default: return difficulty;
     }
   }
@@ -1516,7 +1499,7 @@ export class TheoreticalExamComponent implements OnInit {
   // ─── Submission ─────────────────────────────────────────
   submitTest(): void {
     if (this.answeredCount === 0) return;
-    if (!confirm(`Soumettre vos ${this.answeredCount} réponse(s) sur ${this.questions.length} pour correction ?`)) return;
+    if (!confirm(`هل تريد تسليم ${this.answeredCount} إجابة من أصل ${this.questions.length} للتصحيح؟`)) return;
 
     this.phase = 'submitting';
 
@@ -1529,7 +1512,7 @@ export class TheoreticalExamComponent implements OnInit {
       },
       error: (err) => {
         this.phase = 'error';
-        this.errorMsg = 'Erreur lors de la soumission: ' + (err.error?.message || err.message || 'Erreur serveur');
+        this.errorMsg = 'خطأ أثناء التسليم: ' + (err.error?.message || err.message || 'خطأ في الخادم');
       }
     });
   }

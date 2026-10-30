@@ -105,9 +105,11 @@ import { environment } from '../../../../environments/environment';
           <!-- User Profile Dropdown -->
           <div class="user-profile-container" (click)="toggleDropdown($event)">
             <div class="user-profile">
-              <div class="user-avatar">
+              <div class="user-avatar" *ngIf="!profilePictureUrl">
                 {{ initials }}
               </div>
+              <img *ngIf="profilePictureUrl" [src]="profilePictureUrl" alt="avatar"
+                   class="avatar-img" (error)="profilePictureUrl = ''" />
               <div class="user-info">
                 <p class="user-email">{{ email }}</p>
                 <p class="user-role">Gérant</p>
@@ -657,6 +659,16 @@ import { environment } from '../../../../environments/environment';
         flex-shrink: 0;
       }
 
+      .avatar-img {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        object-fit: cover;
+        flex-shrink: 0;
+        border: 2px solid rgba(255,255,255,0.15);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      }
+
       .user-info {
         display: flex;
         flex-direction: column;
@@ -752,6 +764,7 @@ import { environment } from '../../../../environments/environment';
 export class TenantLayoutComponent implements OnInit, OnDestroy {
   email = '';
   initials = '';
+  profilePictureUrl = '';
   isDropdownOpen = false;
   isMessagesOpen = false;
   isNotificationsOpen = false;
@@ -781,9 +794,22 @@ export class TenantLayoutComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.loadPendingInstallments();
     this.loadUnreadMessages();
+    this.loadProfilePicture();
     this.messagePollInterval = setInterval(() => {
       this.loadUnreadMessages();
     }, 5000);
+  }
+
+  loadProfilePicture() {
+    this.http.get<any>(`${environment.apiUrl}/profile/me`).subscribe({
+      next: (data) => {
+        this.profilePictureUrl = data.profilePictureUrl || '';
+        if (data.firstName || data.lastName) {
+          this.initials = ((data.firstName?.[0] || '') + (data.lastName?.[0] || '')).toUpperCase() || this.initials;
+        }
+      },
+      error: () => {}
+    });
   }
 
   ngOnDestroy() {

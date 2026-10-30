@@ -20,10 +20,12 @@ interface Student {
     lastName?: string;
     email?: string;
     telephone?: string;
+    profilePictureUrl?: string;
   };
   firstName?: string;
   lastName?: string;
   telephone?: string;
+  profilePictureUrl?: string;
   level?: string;
   prenom?: string;
   nom?: string;
@@ -115,7 +117,8 @@ interface Student {
             <tr *ngFor="let s of filteredStudents; let i = index" class="table-row" [style.animation-delay]="(i * 0.04) + 's'">
               <td>
                 <div class="user-cell">
-                  <div class="avatar avatar-indigo">
+                  <img *ngIf="getAvatarUrl(s)" [src]="getAvatarUrl(s)" class="avatar avatar-img" (error)="onAvatarError(s)" alt="Photo" />
+                  <div class="avatar avatar-indigo" *ngIf="!getAvatarUrl(s)">
                     {{ getInitials(s) }}
                   </div>
                   <span class="user-name">{{ s.user?.firstName || s.firstName || '—' }}</span>
@@ -396,6 +399,11 @@ interface Student {
       box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
     }
 
+    .avatar-img {
+      object-fit: cover;
+      border: 1.5px solid rgba(255, 255, 255, 0.2);
+    }
+
     .user-name {
       font-weight: 600;
       color: #ffffff;
@@ -579,7 +587,22 @@ export class StudentsComponent implements OnInit {
       fullName: student.fullName || student.name || normalizedName,
       full_name: student.full_name || student.name || normalizedName,
       schoolName: student.schoolName || student.tenantName || student.tenant?.name,
+      profilePictureUrl: student.profilePictureUrl || student.user?.profilePictureUrl,
     };
+  }
+
+  getAvatarUrl(student: Student): string | null {
+    const pic = student.profilePictureUrl || student.user?.profilePictureUrl;
+    if (!pic) return null;
+    if (pic.startsWith('http://') || pic.startsWith('https://')) return pic;
+    return `${environment.apiUrl}${pic.startsWith('/') ? '' : '/'}${pic}`;
+  }
+
+  onAvatarError(student: any): void {
+    if (student) {
+      student.profilePictureUrl = undefined;
+      if (student.user) student.user.profilePictureUrl = undefined;
+    }
   }
 
   loadStudents() {

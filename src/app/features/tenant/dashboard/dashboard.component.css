@@ -364,6 +364,11 @@
   box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3);
 }
 
+.avatar-img {
+  object-fit: cover;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+}
+
 /* Info Text */
 .tenant-info, .student-info {
   margin-left: 1rem;

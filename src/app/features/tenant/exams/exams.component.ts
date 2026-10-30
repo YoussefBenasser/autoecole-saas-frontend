@@ -182,6 +182,16 @@ interface Student {
             <button (click)="closeModal()" class="modal-close">&times;</button>
           </div>
           <form (ngSubmit)="onSubmit()" #examForm="ngForm" class="modal-body">
+
+            <!-- Past Date Alert -->
+            <div *ngIf="pastDateError" class="alert alert-warning">
+              <div class="alert-icon">⏰</div>
+              <div class="alert-content">
+                <strong>Date dans le passé</strong>
+                <span>Vous ne pouvez pas planifier un examen à une date déjà passée. Veuillez choisir une date aujourd'hui ou dans le futur.</span>
+              </div>
+            </div>
+
             <div class="form-group">
               <label>Élève</label>
               <select name="studentId" [(ngModel)]="newExam.studentId" required class="form-input">
@@ -206,11 +216,12 @@ interface Student {
             </div>
             <div class="form-group">
               <label>Date prévue</label>
-              <input type="date" name="date" [(ngModel)]="newExam.date" required class="form-input" />
+              <input type="date" name="date" [(ngModel)]="newExam.date" required class="form-input"
+                     (change)="onDateChange()" />
             </div>
             <div class="modal-actions">
               <button type="button" (click)="closeModal()" class="btn-ghost">Annuler</button>
-              <button type="submit" [disabled]="!examForm.form.valid || isSubmitting || !newExam.type" class="btn-primary">
+              <button type="submit" [disabled]="!examForm.form.valid || isSubmitting || !newExam.type || !!pastDateError" class="btn-primary">
                 <span *ngIf="!isSubmitting">Planifier</span>
                 <span *ngIf="isSubmitting" class="btn-loading">
                   <div class="spinner-sm"></div>
@@ -836,6 +847,51 @@ interface Student {
       border-top: 1px solid rgba(255, 255, 255, 0.08);
     }
 
+    /* Alerts */
+    .alert {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.85rem;
+      padding: 1rem 1.15rem;
+      border-radius: 14px;
+      margin-bottom: 1.25rem;
+      animation: alertIn 0.3s ease-out;
+    }
+
+    @keyframes alertIn {
+      from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .alert-warning {
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+    }
+
+    .alert-icon {
+      font-size: 1.4rem;
+      flex-shrink: 0;
+      margin-top: 0.1rem;
+    }
+
+    .alert-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      font-size: 0.85rem;
+    }
+
+    .alert-warning .alert-content strong {
+      color: #fbbf24;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .alert-content span {
+      color: rgba(255, 255, 255, 0.75);
+      line-height: 1.5;
+    }
+
     @media (max-width: 768px) {
       .page-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
       .kpi-row { grid-template-columns: repeat(2, 1fr); }
@@ -852,6 +908,8 @@ export class ExamsComponent implements OnInit {
 
   isModalOpen = false;
   isSubmitting = false;
+  today = new Date().toISOString().split('T')[0];
+  pastDateError = false;
   newExam = { studentId: '', type: '', date: '' };
 
   constructor(private http: HttpClient) {}
@@ -928,10 +986,15 @@ export class ExamsComponent implements OnInit {
 
   openModal() {
     this.newExam = { studentId: '', type: '', date: '' };
+    this.pastDateError = false;
     if (!this.allStudents.length) {
       this.loadStudents();
     }
     this.isModalOpen = true;
+  }
+
+  onDateChange(): void {
+    this.pastDateError = !!(this.newExam.date && this.newExam.date < this.today);
   }
 
   closeModal() {
@@ -940,6 +1003,7 @@ export class ExamsComponent implements OnInit {
 
   onSubmit() {
     if (!this.newExam.studentId || !this.newExam.type || !this.newExam.date) return;
+    if (this.pastDateError) return;
     this.isSubmitting = true;
     this.http.post(`${environment.apiUrl}/exams/register`, this.newExam).subscribe({
       next: () => {

@@ -29,12 +29,49 @@ import { environment } from '../../../environments/environment';
         <!-- Profile Card -->
         <div class="profile-card">
           <div class="avatar-section">
-            <div class="avatar-circle">
-              {{ getInitials() }}
+            <!-- Avatar with picture support -->
+            <div class="avatar-wrapper">
+              <div class="avatar-circle" *ngIf="!profile?.profilePictureUrl">
+                {{ getInitials() }}
+              </div>
+              <img *ngIf="profile?.profilePictureUrl"
+                   [src]="profile.profilePictureUrl"
+                   alt="Photo de profil"
+                   class="avatar-img"
+                   (error)="onAvatarError($event)" />
+              <!-- Upload button overlay -->
+              <label class="avatar-upload-btn" for="avatar-upload" title="Changer la photo de profil">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </label>
+              <input id="avatar-upload" type="file" accept="image/jpeg,image/png,image/webp"
+                     (change)="onFileSelected($event)" style="display:none" />
             </div>
             <div class="avatar-info">
               <h2 class="avatar-name">{{ form.firstName }} {{ form.lastName }}</h2>
               <span class="role-badge">{{ getRoleLabel() }}</span>
+            </div>
+          </div>
+
+          <!-- Picture preview + upload actions -->
+          <div *ngIf="previewUrl" class="picture-preview-section">
+            <div class="preview-label">Aperçu de la nouvelle photo :</div>
+            <div class="preview-wrapper">
+              <img [src]="previewUrl" alt="Aperçu" class="preview-img" />
+              <div class="preview-actions">
+                <button type="button" (click)="uploadPicture()" class="btn-upload-confirm" [disabled]="isUploadingPicture">
+                  <span *ngIf="!isUploadingPicture">✅ Enregistrer</span>
+                  <span *ngIf="isUploadingPicture" class="saving-spinner">
+                    <span class="mini-spinner"></span> Upload...
+                  </span>
+                </button>
+                <button type="button" (click)="cancelPreview()" class="btn-cancel-preview" [disabled]="isUploadingPicture">
+                  ✕ Annuler
+                </button>
+              </div>
             </div>
           </div>
 
@@ -136,11 +173,20 @@ import { environment } from '../../../environments/environment';
               <span class="info-label">Téléphone</span>
               <span class="info-value">{{ form.telephone }}</span>
             </div>
+            <div class="info-row" *ngIf="profile?.profilePictureUrl">
+              <span class="info-label">Photo de profil</span>
+              <span class="info-value" style="color: #4ade80;">✓ Configurée</span>
+            </div>
+            <div class="info-row" *ngIf="!profile?.profilePictureUrl">
+              <span class="info-label">Photo de profil</span>
+              <span class="info-value" style="color: #94a3b8;">Non configurée</span>
+            </div>
           </div>
 
           <div class="tips-card">
             <h3 class="info-title">💡 Conseils</h3>
             <ul class="tips-list">
+              <li>Formats acceptés : JPEG, PNG, WebP (max 5 Mo)</li>
               <li>Utilisez un mot de passe fort (8+ caractères)</li>
               <li>Mettez à jour votre numéro de téléphone pour être contacté</li>
               <li>Votre email sert pour la connexion, changez-le avec précaution</li>
@@ -196,14 +242,86 @@ import { environment } from '../../../environments/environment';
       border-bottom: 1px solid rgba(255,255,255,0.08);
     }
 
+    /* Avatar wrapper with relative positioning for upload overlay */
+    .avatar-wrapper {
+      position: relative;
+      width: 80px; height: 80px;
+      flex-shrink: 0;
+    }
+
     .avatar-circle {
-      width: 72px; height: 72px; border-radius: 50%;
+      width: 80px; height: 80px; border-radius: 50%;
       background: linear-gradient(135deg, #6366f1, #4f46e5);
       display: flex; align-items: center; justify-content: center;
       font-size: 1.5rem; font-weight: 800; color: white;
       box-shadow: 0 8px 24px rgba(99,102,241,0.35);
-      flex-shrink: 0;
     }
+
+    .avatar-img {
+      width: 80px; height: 80px; border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(99,102,241,0.4);
+      box-shadow: 0 8px 24px rgba(99,102,241,0.25);
+    }
+
+    .avatar-upload-btn {
+      position: absolute;
+      bottom: -4px; right: -4px;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      transition: transform 0.2s ease;
+      border: 2px solid #0f172a;
+    }
+    .avatar-upload-btn:hover { transform: scale(1.1); }
+    .avatar-upload-btn svg { width: 14px; height: 14px; color: white; }
+
+    /* Picture preview section */
+    .picture-preview-section {
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: rgba(99,102,241,0.08);
+      border: 1px solid rgba(99,102,241,0.2);
+      border-radius: 12px;
+    }
+
+    .preview-label {
+      font-size: 0.83rem; font-weight: 600; color: rgba(255,255,255,0.6);
+      margin-bottom: 0.75rem;
+    }
+
+    .preview-wrapper {
+      display: flex; align-items: center; gap: 1rem;
+    }
+
+    .preview-img {
+      width: 72px; height: 72px; border-radius: 50%;
+      object-fit: cover; border: 2px solid rgba(99,102,241,0.4);
+    }
+
+    .preview-actions {
+      display: flex; flex-direction: column; gap: 0.5rem;
+    }
+
+    .btn-upload-confirm {
+      padding: 0.5rem 1rem; border-radius: 10px;
+      background: linear-gradient(135deg, #4ade80, #16a34a); color: white;
+      border: none; font-size: 0.85rem; font-weight: 700;
+      cursor: pointer; transition: all 0.2s; font-family: inherit;
+    }
+    .btn-upload-confirm:hover:not(:disabled) { transform: translateY(-1px); }
+    .btn-upload-confirm:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .btn-cancel-preview {
+      padding: 0.5rem 1rem; border-radius: 10px;
+      background: rgba(239,68,68,0.1); color: #f87171;
+      border: 1px solid rgba(239,68,68,0.2); font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; font-family: inherit;
+    }
+    .btn-cancel-preview:hover:not(:disabled) { background: rgba(239,68,68,0.2); }
 
     .avatar-name { font-size: 1.2rem; font-weight: 700; color: white; margin: 0 0 0.4rem; }
 
@@ -329,8 +447,11 @@ export class ProfileComponent implements OnInit {
   profile: any = null;
   isLoading = true;
   isSaving = false;
+  isUploadingPicture = false;
   successMsg = '';
   errorMsg = '';
+  previewUrl: string | null = null;
+  selectedFile: File | null = null;
 
   form = {
     firstName: '',
@@ -344,7 +465,7 @@ export class ProfileComponent implements OnInit {
 
   private originalForm: any = {};
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   ngOnInit(): void {
     this.loadProfile();
@@ -364,6 +485,77 @@ export class ProfileComponent implements OnInit {
       },
       error: () => { this.isLoading = false; }
     });
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+
+    const file = input.files[0];
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+
+    if (!allowedTypes.includes(file.type)) {
+      this.errorMsg = 'Format non autorisé. Utilisez JPEG, PNG ou WebP.';
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      this.errorMsg = 'Le fichier dépasse 5 Mo.';
+      return;
+    }
+
+    this.errorMsg = '';
+    this.selectedFile = file;
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this.previewUrl = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+
+    // Reset input so same file can be reselected
+    input.value = '';
+  }
+
+  cancelPreview(): void {
+    this.previewUrl = null;
+    this.selectedFile = null;
+  }
+
+  uploadPicture(): void {
+    if (!this.selectedFile) return;
+
+    this.isUploadingPicture = true;
+    this.successMsg = '';
+    this.errorMsg = '';
+
+    const formData = new FormData();
+    formData.append('file', this.selectedFile);
+
+    this.http.post<any>(`${environment.apiUrl}/profile/me/picture`, formData).subscribe({
+      next: (res) => {
+        this.isUploadingPicture = false;
+        if (this.profile) {
+          this.profile.profilePictureUrl = res.profilePictureUrl;
+        }
+        this.previewUrl = null;
+        this.selectedFile = null;
+        this.successMsg = res.message || 'Photo de profil mise à jour avec succès.';
+        setTimeout(() => this.successMsg = '', 4000);
+      },
+      error: (err) => {
+        this.isUploadingPicture = false;
+        this.errorMsg = err?.error?.error || err?.error?.message || 'Erreur lors de l\'envoi de la photo.';
+      }
+    });
+  }
+
+  onAvatarError(event: Event): void {
+    // If image fails to load, remove the url and show initials
+    if (this.profile) {
+      this.profile.profilePictureUrl = null;
+    }
   }
 
   saveProfile(): void {

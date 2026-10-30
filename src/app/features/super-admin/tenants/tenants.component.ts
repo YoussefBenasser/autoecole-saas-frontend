@@ -9,8 +9,11 @@ interface Tenant {
   name: string;
   email: string;
   phone?: string;
+  address?: string;
+  city?: string;
   status: string;
   createdAt?: string;
+  updatedAt?: string;
 }
 
 @Component({
@@ -155,7 +158,22 @@ interface Tenant {
             </div>
 
             <div class="card-actions">
-              <div *ngIf="tenant.status === 'PENDING'" style="display: flex; gap: 0.5rem; width: 100%;">
+              <div style="display: flex; gap: 0.5rem; width: 100%; align-items: center; justify-content: flex-end;">
+                <!-- Details button (Always visible) -->
+                <button
+                  (click)="openDetailModal(tenant); $event.stopPropagation()"
+                  class="action-button details-button"
+                  title="Voir les détails du dossier"
+                  style="flex: 1; justify-content: center;">
+                  <svg class="button-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  <span>Détails</span>
+                </button>
+
+              <div *ngIf="tenant.status === 'PENDING'" style="display: flex; gap: 0.5rem; flex: 2;">
+
                 <button
                   (click)="approveTenant(tenant.id)"
                   class="action-button approve-button"
@@ -189,6 +207,7 @@ interface Tenant {
                 </svg>
                 <span>École refusée</span>
               </div>
+              </div>
             </div>
           </div>
         </div>
@@ -213,6 +232,126 @@ interface Tenant {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
+      </div>
+
+      <!-- ===== Tenant Detail Modal ===== -->
+      <div *ngIf="showDetailModal && selectedTenant" class="modal-overlay" (click.self)="closeDetailModal()">
+        <div class="modal-content detail-modal-content">
+          <div class="modal-header">
+            <div class="modal-header-icon" style="background: linear-gradient(135deg, rgba(99,102,241,0.3), rgba(139,92,246,0.2)); border-color: rgba(99,102,241,0.3);">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: #818cf8;">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            </div>
+            <div style="flex:1;">
+              <h2 class="modal-title">Dossier d'inscription</h2>
+              <p class="modal-subtitle">Examinez les informations avant de statuer</p>
+            </div>
+            <button class="modal-close-btn" (click)="closeDetailModal()">&#x2715;</button>
+          </div>
+
+          <div class="detail-modal-body">
+            <!-- Avatar + Name -->
+            <div class="detail-hero">
+              <div class="detail-avatar" [style.background]="getAvatarBg(selectedTenant.name)">
+                {{ selectedTenant.name.charAt(0).toUpperCase() }}
+              </div>
+              <div class="detail-hero-info">
+                <h3 class="detail-school-name">{{ selectedTenant.name }}</h3>
+                <span class="status-badge pending" style="background: rgba(245,158,11,0.2); color: #f59e0b; border: 1px solid rgba(245,158,11,0.35); font-size: 0.78rem;">
+                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="margin-right:4px;vertical-align:middle;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  En attente de validation
+                </span>
+              </div>
+            </div>
+
+            <!-- Info grid -->
+            <div class="detail-info-grid">
+              <div class="detail-info-card">
+                <div class="detail-info-label">
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                  Adresse e-mail
+                </div>
+                <div class="detail-info-value">{{ selectedTenant.email }}</div>
+              </div>
+
+              <div class="detail-info-card">
+                <div class="detail-info-label">
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                  Téléphone
+                </div>
+                <div class="detail-info-value">{{ selectedTenant.phone || 'Non renseigné' }}</div>
+              </div>
+
+              <div class="detail-info-card">
+                <div class="detail-info-label">
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                  Date d'inscription
+                </div>
+                <div class="detail-info-value">{{ selectedTenant.createdAt ? formatDate(selectedTenant.createdAt) : 'N/A' }}</div>
+              </div>
+
+              <div class="detail-info-card">
+                <div class="detail-info-label">
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  Statut actuel
+                </div>
+                <div class="detail-info-value" style="color: #f59e0b;">En attente</div>
+              </div>
+
+              <div class="detail-info-card" *ngIf="selectedTenant.address">
+                <div class="detail-info-label">
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                  Adresse
+                </div>
+                <div class="detail-info-value">{{ selectedTenant.address }}</div>
+              </div>
+
+              <div class="detail-info-card" *ngIf="selectedTenant.city">
+                <div class="detail-info-label">
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5" /></svg>
+                  Ville
+                </div>
+                <div class="detail-info-value">{{ selectedTenant.city }}</div>
+              </div>
+            </div>
+
+            <!-- Divider -->
+            <div style="border-top: 1px solid rgba(255,255,255,0.07); margin: 0.25rem 0;"></div>
+
+            <!-- Unique ID -->
+            <div style="padding: 0.75rem 0; display: flex; align-items: center; gap: 0.5rem;">
+              <span style="font-size: 0.78rem; color: rgba(255,255,255,0.35); font-family: monospace;">ID:</span>
+              <span style="font-size: 0.78rem; color: rgba(255,255,255,0.25); font-family: monospace; word-break: break-all;">{{ selectedTenant.id }}</span>
+            </div>
+          </div>
+
+          <div class="modal-actions" style="gap: 0.6rem;">
+            <button class="modal-cancel-btn" (click)="closeDetailModal()" [disabled]="isSubmitting">Fermer</button>
+            <button
+              *ngIf="selectedTenant.status === 'PENDING'"
+              class="action-button reject-button"
+              style="flex:1; justify-content: center; padding: 0.85rem; border-radius: 12px; font-size:0.9rem; font-family:inherit;"
+              (click)="closeDetailModal(); rejectTenant(selectedTenant.id)"
+              [disabled]="isLoading">
+              <svg class="button-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Rejeter
+            </button>
+            <button
+              *ngIf="selectedTenant.status === 'PENDING'"
+              class="modal-confirm-btn"
+              style="flex:2;"
+              (click)="closeDetailModal(); approveTenant(selectedTenant.id)"
+              [disabled]="isLoading">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              Approuver l'auto-école
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Password Modal -->
@@ -899,6 +1038,106 @@ interface Tenant {
       box-shadow: 0 8px 20px rgba(239, 68, 68, 0.2);
     }
 
+    .details-button {
+      background: rgba(99, 102, 241, 0.15);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.35);
+    }
+
+    .details-button:hover:not(:disabled) {
+      background: rgba(99, 102, 241, 0.28);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(99, 102, 241, 0.2);
+    }
+
+    /* ── Detail Modal ── */
+    .detail-modal-content {
+      width: min(620px, 100%);
+    }
+
+    .detail-modal-body {
+      padding: 1.5rem 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .detail-hero {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      padding: 1rem 1.25rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+    }
+
+    .detail-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #1a1a1a;
+      flex-shrink: 0;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+
+    .detail-hero-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .detail-school-name {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: white;
+      margin: 0;
+    }
+
+    .detail-info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .detail-info-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 12px;
+      padding: 0.875rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .detail-info-label {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.4);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .detail-info-label svg {
+      flex-shrink: 0;
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+    .detail-info-value {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.9);
+      word-break: break-word;
+    }
+
     .button-icon {
       width: 16px;
       height: 16px;
@@ -1334,7 +1573,11 @@ export class TenantsComponent implements OnInit {
   searchQuery = '';
   expandedTenantId: string | null = null;
 
-  // Modal state
+  // Detail modal state
+  showDetailModal = false;
+  selectedTenant: Tenant | null = null;
+
+  // Password / Approval modal state
   showPasswordModal = false;
   provisionalPassword = '';
   showProvisionalPassword = false;
@@ -1353,6 +1596,16 @@ export class TenantsComponent implements OnInit {
     } else {
       this.expandedTenantId = id;
     }
+  }
+
+  openDetailModal(tenant: Tenant): void {
+    this.selectedTenant = tenant;
+    this.showDetailModal = true;
+  }
+
+  closeDetailModal(): void {
+    this.showDetailModal = false;
+    this.selectedTenant = null;
   }
 
   get filteredTenants(): Tenant[] {

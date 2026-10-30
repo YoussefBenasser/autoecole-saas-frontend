@@ -16,6 +16,7 @@ interface Student {
   lastName?: string;
   email?: string;
   telephone?: string;
+  profilePictureUrl?: string | null;
   // Also handle nested user object in case structure changes
   user?: {
     name?: string;
@@ -27,6 +28,7 @@ interface Student {
     lastName?: string;
     email?: string;
     telephone?: string;
+    profilePictureUrl?: string | null;
   };
   level?: string;
 }
@@ -121,7 +123,8 @@ interface Student {
             <tr *ngFor="let s of filteredStudents; let i = index" class="table-row" [style.animation-delay]="(i * 0.04) + 's'">
               <td>
                 <div class="user-cell">
-                  <div class="avatar avatar-indigo">
+                  <img *ngIf="getAvatarUrl(s)" [src]="getAvatarUrl(s)" class="avatar avatar-img" (error)="onAvatarError(s)" alt="Avatar" />
+                  <div class="avatar avatar-indigo" *ngIf="!getAvatarUrl(s)">
                     {{ getInitials(s) }}
                   </div>
                   <span class="user-name">{{ s.prenom || s.firstName || s.user?.prenom || s.user?.firstName || '—' }}</span>
@@ -468,6 +471,11 @@ interface Student {
       box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
     }
 
+    .avatar-img {
+      object-fit: cover;
+      border: 1.5px solid rgba(255, 255, 255, 0.2);
+    }
+
     .user-name {
       font-weight: 600;
       color: #ffffff;
@@ -799,6 +807,20 @@ export class StudentsComponent implements OnInit {
     return (email.charAt(0) || 'N').toUpperCase();
   }
 
+  getAvatarUrl(student: Student): string | null {
+    const pic = student.profilePictureUrl || student.user?.profilePictureUrl;
+    if (!pic) return null;
+    if (pic.startsWith('http://') || pic.startsWith('https://')) return pic;
+    return `${environment.apiUrl}${pic.startsWith('/') ? '' : '/'}${pic}`;
+  }
+
+  onAvatarError(student: any): void {
+    if (student) {
+      student.profilePictureUrl = null;
+      if (student.user) student.user.profilePictureUrl = null;
+    }
+  }
+
   private normalizeStudent(student: any): Student {
     // Keep raw data exactly as provided by the backend to prevent stripping fields
     return {
@@ -808,6 +830,7 @@ export class StudentsComponent implements OnInit {
       nom: student.nom || student.lastName || student.user?.nom || student.user?.lastName || '',
       telephone: student.telephone || student.user?.telephone || '',
       email: student.email || student.user?.email || '',
+      profilePictureUrl: student.profilePictureUrl || student.user?.profilePictureUrl || null
     };
   }
 

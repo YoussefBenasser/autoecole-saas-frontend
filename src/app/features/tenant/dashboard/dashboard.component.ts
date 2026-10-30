@@ -12,6 +12,8 @@ interface RecentStudent {
   nom?: string;
   firstName?: string;
   lastName?: string;
+  email?: string;
+  profilePictureUrl?: string;
   user?: {
     name?: string;
     firstName?: string;
@@ -19,8 +21,8 @@ interface RecentStudent {
     prenom?: string;
     nom?: string;
     email?: string;
+    profilePictureUrl?: string;
   };
-  email?: string;
 }
 
 interface RecentPayment {
@@ -97,38 +99,29 @@ interface AuditLog {
 
     <div class="content-grid">
       <div class="quick-actions">
-        <div class="section-header" style="padding:0 0 2rem 0; background:transparent; border-bottom:none;">
-          <h2 class="section-title">Statistiques d'examens</h2>
-          <p class="section-subtitle">Aperçu global de votre taux de réussite.</p>
+        <div class="section-header" style="padding:0 0 1rem 0; background:transparent; border-bottom:none;">
+          <h2 class="section-title">Examens des élèves</h2>
+          <p class="section-subtitle">Aperçu des prochains examens prévus.</p>
         </div>
 
-        <div style="margin-bottom: 2rem;">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-            <span style="color: rgba(255,255,255,0.7); font-size:0.9rem;">Taux de réussite global</span>
-            <span style="font-weight:700; color:#22c55e;">{{ passRate }}%</span>
-          </div>
-          <div class="progress-bar">
-            <div class="progress-fill" [style.width]="passRate + '%'"></div>
-          </div>
+        <div *ngIf="upcomingExams.length === 0" style="padding: 2rem; text-align: center; color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1);">
+          Aucun examen prévu pour le moment.
         </div>
 
-        <div style="margin-bottom: 2rem;">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-            <span style="color: rgba(255,255,255,0.7); font-size:0.9rem;">Score moyen / mois</span>
-            <span style="font-weight:700; color:#38bdf8;">{{ (avgScore > 100 ? 100 : avgScore) | number:'1.1-1' }}</span>
-          </div>
-          <div class="progress-bar">
-            <div class="progress-fill accent" [style.width]="(avgScore > 100 ? 100 : avgScore) + '%'"></div>
-          </div>
-        </div>
-
-        <div *ngIf="hardestCategories.length > 0">
-          <p style="color: rgba(255,255,255,0.7); font-size: 0.9rem; font-weight:600; margin-bottom: 1rem;">Catégories les plus difficiles</p>
-          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-            <div *ngFor="let cat of hardestCategories.slice(0,3)" style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); padding: 0.75rem 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
-              <span style="color: white; font-size:0.9rem; font-weight:600;">{{ cat.key }}</span>
-              <span style="background: rgba(239,68,68,0.2); color:#fca5a5; padding:0.2rem 0.6rem; border-radius:20px; font-size:0.8rem; font-weight:600;">{{ cat.count }} échecs</span>
+        <div *ngIf="upcomingExams.length > 0" style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <div *ngFor="let exam of upcomingExams.slice(0, 5)" style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+            <div>
+              <div style="color: white; font-size:1rem; font-weight:600; margin-bottom: 0.25rem;">{{ getExamStudentName(exam) }}</div>
+              <div style="color: rgba(255,255,255,0.6); font-size:0.85rem;">{{ exam.date | date:'dd/MM/yyyy' }}</div>
             </div>
+            <span [style.background]="exam.type.toLowerCase() === 'driving' ? 'rgba(34,197,94,0.15)' : 'rgba(168,85,247,0.15)'" 
+                  [style.color]="exam.type.toLowerCase() === 'driving' ? '#4ade80' : '#c084fc'" 
+                  style="padding:0.35rem 0.75rem; border-radius:20px; font-size:0.8rem; font-weight:600; border: 1px solid rgba(255,255,255,0.05);">
+              {{ exam.type.toLowerCase() === 'driving' ? '🚗 Pratique' : '📝 Code' }}
+            </span>
+          </div>
+          <div *ngIf="upcomingExams.length > 5" style="text-align: center; margin-top: 0.5rem;">
+            <a routerLink="/tenant/exams" style="color: #38bdf8; font-size: 0.9rem; text-decoration: none; font-weight: 600;">Voir tous les examens →</a>
           </div>
         </div>
       </div>
@@ -144,7 +137,8 @@ interface AuditLog {
         <div class="tenants-grid" *ngIf="!studentsLoading">
           <div *ngFor="let s of recentStudents" class="tenant-card" style="display:flex; justify-content:space-between; align-items:center; padding: 1.25rem;">
             <div style="display:flex; align-items:center;">
-              <div class="tenant-avatar" style="background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%); color:white;">
+              <img *ngIf="getAvatarUrl(s)" [src]="getAvatarUrl(s)" class="tenant-avatar avatar-img" (error)="onAvatarError(s)" alt="Photo" />
+              <div class="tenant-avatar" *ngIf="!getAvatarUrl(s)" style="background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%); color:white;">
                 {{ getStudentInitials(s) }}
               </div>
               <div class="tenant-info">
@@ -296,12 +290,25 @@ export class TenantDashboardComponent implements OnInit {
   avgScore    = 0;
   hardestCategories: { key: string; count: number }[] = [];
 
+  upcomingExams: any[] = [];
+  allStudents: any[] = [];
   recentStudents: RecentStudent[] = [];
   recentPayments: RecentPayment[] = [];
   joinRequests: JoinRequest[] = [];
   recentLogs: AuditLog[] = [];
   requestsLoading = true;
   processingId: string | null = null;
+
+  getExamStudentName(exam: any): string {
+    if (exam.studentName) return exam.studentName;
+    if (exam.student) return this.getStudentDisplayName(exam.student);
+    if (exam.studentId) {
+      const student = this.allStudents.find(s => s.id === exam.studentId || s.studentId === exam.studentId);
+      if (student) return this.getStudentDisplayName(student);
+      return 'Élève ' + exam.studentId.substring(0, 6) + '...';
+    }
+    return 'Élève inconnu';
+  }
 
   studentsLoading = true;
   statsLoading    = true;
@@ -341,6 +348,7 @@ export class TenantDashboardComponent implements OnInit {
 
     this.tenantService.getStudents().subscribe({
       next: students => {
+        this.allStudents = students;
         this.kpiStats[0].value = String(students.length);
         this.recentStudents = students.slice(0, 5);
         this.studentsLoading = false;
@@ -365,10 +373,12 @@ export class TenantDashboardComponent implements OnInit {
 
     this.tenantService.getUpcomingExams().subscribe({
       next: exams => {
+        this.upcomingExams = exams;
         this.kpiStats[2].value = String(exams.length);
         this.cdr.detectChanges();
       },
       error: () => {
+        this.upcomingExams = [];
         this.kpiStats[2].value = '—';
         this.cdr.detectChanges();
       }
@@ -448,6 +458,7 @@ export class TenantDashboardComponent implements OnInit {
   private loadFallback(): void {
     this.tenantService.getStudents().subscribe({
       next: students => {
+        this.allStudents = students;
         this.kpiStats[0].value = String(students.length);
         this.recentStudents = students.slice(0, 5);
         this.studentsLoading = false;
@@ -466,9 +477,12 @@ export class TenantDashboardComponent implements OnInit {
 
     this.tenantService.getUpcomingExams().subscribe({
       next: exams => {
+        this.upcomingExams = exams;
         this.kpiStats[2].value = String(exams.length);
       },
-      error: () => {}
+      error: () => {
+        this.upcomingExams = [];
+      }
     });
 
     this.tenantService.getPaymentStats().subscribe({
@@ -522,5 +536,19 @@ export class TenantDashboardComponent implements OnInit {
     }
 
     return (student.user?.email?.charAt(0) || student.email?.charAt(0) || 'N').toUpperCase();
+  }
+
+  getAvatarUrl(student: RecentStudent): string | null {
+    const pic = student.profilePictureUrl || student.user?.profilePictureUrl;
+    if (!pic) return null;
+    if (pic.startsWith('http://') || pic.startsWith('https://')) return pic;
+    return `${environment.apiUrl}${pic.startsWith('/') ? '' : '/'}${pic}`;
+  }
+
+  onAvatarError(student: any): void {
+    if (student) {
+      student.profilePictureUrl = undefined;
+      if (student.user) student.user.profilePictureUrl = undefined;
+    }
   }
 }

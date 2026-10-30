@@ -13,11 +13,13 @@ interface Monitor {
   firstName?: string;
   lastName?: string;
   email?: string;
+  profilePictureUrl?: string;
   user?: {
     firstName: string;
     lastName: string;
     prenom?: string;
     nom?: string;
+    profilePictureUrl?: string;
   };
 }
 
@@ -139,12 +141,13 @@ interface Student {
           <div class="session-content">
             <div class="session-row-top">
               <div class="session-monitor">
-                <div class="avatar-sm avatar-amber">
+                <img *ngIf="getMonitorAvatarUrl(s.monitorId)" [src]="getMonitorAvatarUrl(s.monitorId)" class="avatar-sm avatar-img" alt="Photo" />
+                <div class="avatar-sm avatar-amber" *ngIf="!getMonitorAvatarUrl(s.monitorId)">
                   {{ (s.monitorName || s.monitorId || 'M').charAt(0) }}
                 </div>
                 <div>
                   <span class="label-small">Moniteur</span>
-                  <span class="name-text">{{ s.monitorName || 'Moniteur ' + (s.monitorId?.substring(0, 6) || '') }}</span>
+                  <span class="name-text">{{ s.monitorName || 'Moniteur ' + (s.monitorId.substring(0, 6) || '') }}</span>
                 </div>
               </div>
               <span class="status-badge" [class.status-completed]="s.status === 'COMPLETED'" [class.status-planned]="s.status !== 'COMPLETED'">
@@ -187,26 +190,54 @@ interface Student {
             <button (click)="closeModal()" class="modal-close">&times;</button>
           </div>
           <form (ngSubmit)="onSubmit()" #sessionForm="ngForm" class="modal-body">
+
+            <!-- Past Date Alert -->
+            <div *ngIf="pastDateError" class="alert alert-warning">
+              <div class="alert-icon">⏰</div>
+              <div class="alert-content">
+                <strong>Date dans le passé</strong>
+                <span>Vous ne pouvez pas planifier une séance à une date déjà passée. Veuillez choisir une date aujourd'hui ou dans le futur.</span>
+              </div>
+            </div>
+
+            <!-- Monitor Conflict Alert -->
+            <div *ngIf="conflictError" class="alert alert-danger">
+              <div class="alert-icon">⚠️</div>
+              <div class="alert-content">
+                <strong>Conflit de planning détecté !</strong>
+                <span>Le moniteur <b>{{ conflictMonitorName }}</b> est déjà assigné à une séance qui se chevauche :</span>
+                <div class="conflict-detail">
+                  <span class="conflict-date">📅 {{ conflictSession?.sessionDate }}</span>
+                  <span class="conflict-time">🕐 {{ conflictSession?.startTime?.substring(0,5) }} → {{ conflictSession?.endTime?.substring(0,5) }}</span>
+                </div>
+                <span class="conflict-hint">Veuillez choisir un autre horaire ou un autre moniteur.</span>
+              </div>
+            </div>
+
             <div class="form-row">
               <div class="form-group">
                 <label>Date</label>
-                <input type="date" name="sessionDate" [(ngModel)]="newSession.sessionDate" required
-                       class="form-input" [min]="today" />
+                <input type="date" name="sessionDate" [(ngModel)]="newSession.sessionDate"
+                       required class="form-input"
+                       (change)="onFormChange()" />
               </div>
               <div class="form-group-row">
                 <div class="form-group">
                   <label>Début</label>
-                  <input type="time" name="startTime" [(ngModel)]="newSession.startTime" required class="form-input" />
+                  <input type="time" name="startTime" [(ngModel)]="newSession.startTime" required class="form-input"
+                         (change)="onFormChange()" />
                 </div>
                 <div class="form-group">
                   <label>Fin</label>
-                  <input type="time" name="endTime" [(ngModel)]="newSession.endTime" required class="form-input" />
+                  <input type="time" name="endTime" [(ngModel)]="newSession.endTime" required class="form-input"
+                         (change)="onFormChange()" />
                 </div>
               </div>
             </div>
             <div class="form-group">
               <label>Moniteur</label>
-              <select name="monitorId" [(ngModel)]="newSession.monitorId" required class="form-input">
+              <select name="monitorId" [(ngModel)]="newSession.monitorId" required class="form-input"
+                      (change)="onFormChange()">
                 <option value="" disabled>Sélectionner un moniteur</option>
                 <option *ngFor="let m of monitors" [value]="m.id">
                   {{ getMonitorDisplayName(m) }}
@@ -226,7 +257,7 @@ interface Student {
             </div>
             <div class="modal-actions">
               <button type="button" (click)="closeModal()" class="btn-ghost">Annuler</button>
-              <button type="submit" [disabled]="!sessionForm.form.valid || isSubmitting || selectedStudentIds.length === 0" class="btn-primary">
+              <button type="submit" [disabled]="!sessionForm.form.valid || isSubmitting || selectedStudentIds.length === 0 || !!conflictError || !!pastDateError" class="btn-primary">
                 <span *ngIf="!isSubmitting">Créer la séance</span>
                 <span *ngIf="isSubmitting" class="btn-loading">
                   <div class="spinner-sm"></div>
@@ -540,6 +571,11 @@ interface Student {
     .avatar-amber {
       background: linear-gradient(135deg, #f59e0b, #ef4444);
       box-shadow: 0 4px 10px rgba(245, 158, 11, 0.25);
+    }
+
+    .avatar-img {
+      object-fit: cover;
+      border: 1.5px solid rgba(255, 255, 255, 0.2);
     }
 
     .label-small {
@@ -881,6 +917,84 @@ interface Student {
       border-top: 1px solid rgba(255, 255, 255, 0.08);
     }
 
+    /* Alerts */
+    .alert {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.85rem;
+      padding: 1rem 1.15rem;
+      border-radius: 14px;
+      margin-bottom: 1.25rem;
+      animation: alertIn 0.3s ease-out;
+    }
+
+    @keyframes alertIn {
+      from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .alert-warning {
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+    }
+
+    .alert-danger {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+    }
+
+    .alert-icon {
+      font-size: 1.4rem;
+      flex-shrink: 0;
+      margin-top: 0.1rem;
+    }
+
+    .alert-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      font-size: 0.85rem;
+    }
+
+    .alert-warning .alert-content strong {
+      color: #fbbf24;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .alert-danger .alert-content strong {
+      color: #fca5a5;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .alert-content span {
+      color: rgba(255, 255, 255, 0.75);
+      line-height: 1.5;
+    }
+
+    .conflict-detail {
+      display: flex;
+      gap: 1rem;
+      margin-top: 0.35rem;
+      padding: 0.55rem 0.85rem;
+      background: rgba(239, 68, 68, 0.12);
+      border-radius: 10px;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .conflict-date, .conflict-time {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #fca5a5;
+    }
+
+    .conflict-hint {
+      font-size: 0.8rem !important;
+      color: rgba(255, 255, 255, 0.5) !important;
+      font-style: italic;
+    }
+
     @media (max-width: 768px) {
       .page-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
       .kpi-row { grid-template-columns: repeat(2, 1fr); }
@@ -904,6 +1018,12 @@ export class SessionsComponent implements OnInit {
   today = new Date().toISOString().split('T')[0];
 
   selectedStudentIds: string[] = [];
+
+  // Validation state
+  pastDateError = false;
+  conflictError = false;
+  conflictSession: Session | null = null;
+  conflictMonitorName = '';
 
   newSession = {
     monitorId: '',
@@ -965,6 +1085,15 @@ export class SessionsComponent implements OnInit {
     };
   }
 
+  getMonitorAvatarUrl(monitorId: string): string | null {
+    const monitor = this.monitors.find(m => m.id === monitorId);
+    if (!monitor) return null;
+    const pic = monitor.profilePictureUrl || monitor.user?.profilePictureUrl;
+    if (!pic) return null;
+    if (pic.startsWith('http://') || pic.startsWith('https://')) return pic;
+    return `${environment.apiUrl}${pic.startsWith('/') ? '' : '/'}${pic}`;
+  }
+
   openModal() {
     this.newSession = {
       monitorId: '',
@@ -973,7 +1102,58 @@ export class SessionsComponent implements OnInit {
       endTime: '10:00'
     };
     this.selectedStudentIds = [];
+    this.pastDateError = false;
+    this.conflictError = false;
+    this.conflictSession = null;
+    this.conflictMonitorName = '';
     this.isModalOpen = true;
+  }
+
+  /** Called whenever date, time or monitor changes in the form */
+  onFormChange(): void {
+    this.pastDateError = false;
+    this.conflictError = false;
+    this.conflictSession = null;
+    this.conflictMonitorName = '';
+
+    const { sessionDate, startTime, endTime, monitorId } = this.newSession;
+
+    // 1. Past-date check
+    if (sessionDate && sessionDate < this.today) {
+      this.pastDateError = true;
+      return;
+    }
+
+    // 2. Monitor conflict check
+    if (sessionDate && startTime && endTime && monitorId) {
+      const newStart = this.timeToMinutes(startTime);
+      const newEnd   = this.timeToMinutes(endTime);
+
+      const conflict = this.sessions.find(s =>
+        s.monitorId === monitorId &&
+        s.sessionDate === sessionDate &&
+        this.timesOverlap(newStart, newEnd,
+          this.timeToMinutes(s.startTime),
+          this.timeToMinutes(s.endTime))
+      );
+
+      if (conflict) {
+        this.conflictError = true;
+        this.conflictSession = conflict;
+        const monitor = this.monitors.find(m => m.id === monitorId);
+        this.conflictMonitorName = monitor ? this.getMonitorDisplayName(monitor) : 'ce moniteur';
+      }
+    }
+  }
+
+  private timeToMinutes(time: string): number {
+    if (!time) return 0;
+    const parts = time.split(':');
+    return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+  }
+
+  private timesOverlap(start1: number, end1: number, start2: number, end2: number): boolean {
+    return start1 < end2 && end1 > start2;
   }
 
   isStudentSelected(studentId: string): boolean {
@@ -1003,6 +1183,7 @@ export class SessionsComponent implements OnInit {
 
   onSubmit() {
     if (!this.newSession.monitorId || this.selectedStudentIds.length === 0 || !this.newSession.sessionDate) return;
+    if (this.pastDateError || this.conflictError) return;
     this.isSubmitting = true;
 
     const payload = {

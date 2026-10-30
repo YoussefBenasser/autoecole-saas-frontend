@@ -1,7 +1,9 @@
-import { Component, HostListener, ElementRef } from '@angular/core';
+import { Component, HostListener, ElementRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-super-admin-layout',
@@ -117,9 +119,11 @@ import { AuthService } from '../../../core/services/auth.service';
         <!-- User Profile & Logout -->
         <div class="sidebar-footer">
           <div class="user-profile">
-            <div class="user-avatar">
+            <div class="user-avatar" *ngIf="!profilePictureUrl">
               {{ initials }}
             </div>
+            <img *ngIf="profilePictureUrl" [src]="profilePictureUrl" alt="avatar"
+                 class="avatar-img" (error)="profilePictureUrl = ''" />
             <div class="user-info">
               <p class="user-email">{{ email }}</p>
               <p class="user-role">Super Admin</p>
@@ -337,6 +341,16 @@ import { AuthService } from '../../../core/services/auth.service';
         font-size: 0.875rem;
         color: #ffffff;
         flex-shrink: 0;
+      }
+
+      .avatar-img {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        object-fit: cover;
+        flex-shrink: 0;
+        border: 2px solid rgba(255,255,255,0.15);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
       }
 
       .user-info {
@@ -567,13 +581,26 @@ import { AuthService } from '../../../core/services/auth.service';
     `
   ]
 })
-export class SuperAdminLayoutComponent {
+export class SuperAdminLayoutComponent implements OnInit {
   email = '';
   initials = '';
+  profilePictureUrl = '';
 
-  constructor(private authService: AuthService, private el: ElementRef) {
+  constructor(private authService: AuthService, private el: ElementRef, private http: HttpClient) {
     this.email = this.authService.getEmail() || 'admin@system.com';
     this.initials = this.email.substring(0, 2).toUpperCase();
+  }
+
+  ngOnInit(): void {
+    this.http.get<any>(`${environment.apiUrl}/profile/me`).subscribe({
+      next: (data) => {
+        this.profilePictureUrl = data.profilePictureUrl || '';
+        if (data.firstName || data.lastName) {
+          this.initials = ((data.firstName?.[0] || '') + (data.lastName?.[0] || '')).toUpperCase() || this.initials;
+        }
+      },
+      error: () => {}
+    });
   }
 
   @HostListener('mousemove', ['$event'])

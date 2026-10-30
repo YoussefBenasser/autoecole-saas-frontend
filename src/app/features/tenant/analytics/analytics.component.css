@@ -61,6 +61,20 @@
 .kpi-trend { font-size: 0.72rem; font-weight: 600; margin-top: 0.25rem; display: block; }
 .kpi-trend.up { color: #4ade80; }
 .kpi-trend.down { color: #f87171; }
+.kpi-trend.neutral { color: rgba(255,255,255,0.4); }
+
+/* Info Bar */
+.info-bar {
+  display: flex; flex-wrap: wrap; gap: 0.75rem 2rem;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px; padding: 0.85rem 1.25rem; margin-bottom: 1.75rem;
+}
+.info-item {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-size: 0.82rem; color: rgba(255,255,255,0.6);
+}
+.info-item b { color: rgba(255,255,255,0.9); }
+.info-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
 /* Charts Grid */
 .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }

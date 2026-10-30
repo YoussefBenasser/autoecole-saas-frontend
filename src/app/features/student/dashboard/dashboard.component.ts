@@ -278,9 +278,14 @@ interface MockTestItem {
           <div class="mock-tests-header">
             <div class="header-left">
               <div class="mock-tests-icon">📝</div>
-              <h2 class="mock-tests-title">Historique des Tests Code</h2>
+              <h2 class="mock-tests-title">{{ showAllTests ? 'Historique des Tests Code' : 'Dernier Test Code' }}</h2>
             </div>
-            <span class="mock-tests-badge">{{ mockTests.length }} test(s)</span>
+            <span class="mock-tests-badge" *ngIf="mockTests.length > 0">{{ showAllTests ? mockTests.length + ' test(s)' : 'Dernier résultat' }}</span>
+          </div>
+          <div class="mock-tests-actions" style="display: flex; justify-content: flex-end; padding: 0 1.5rem 1rem;">
+            <button (click)="showAllTests = !showAllTests" style="background: rgba(255,255,255,0.05); color: #38bdf8; border: 1px solid rgba(56,189,248,0.2); padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+              {{ showAllTests ? 'Voir moins' : 'Voir tous les tests' }}
+            </button>
           </div>
           <div class="mock-tests-table-wrapper">
             <table class="mock-tests-table">
@@ -292,7 +297,7 @@ interface MockTestItem {
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let t of mockTests" class="mock-test-row">
+                <tr *ngFor="let t of mockTests.slice(0, showAllTests ? undefined : 1)" class="mock-test-row">
                   <td class="mock-date-cell">{{ t.takenAt | date:'dd/MM/yyyy HH:mm' }}</td>
                   <td class="mock-score-cell">
                     <strong>{{ t.score }}</strong>/{{ t.totalQuestions }}
@@ -1263,6 +1268,7 @@ export class DashboardComponent implements OnInit {
   myPlan: PaymentPlan | null = null;
   myInstallments: PaymentInstallment[] = [];
   mockTests: MockTestItem[] = [];
+  showAllTests = false;
   
   showPaymentModal = false;
   paymentForm = { amount: null, mode: 'cash' };
@@ -1373,6 +1379,7 @@ export class DashboardComponent implements OnInit {
   }
 
   getMonitorLabel(s: SessionResponse): string {
+    if (s.monitorName) return s.monitorName;
     if (s.monitorId) {
       return 'Moniteur ' + s.monitorId.substring(0, 8) + '…';
     }

@@ -17,6 +17,14 @@ interface SessionItem {
   notes?: string;
 }
 
+interface MonitorProfile {
+  id?: string;
+  firstName?: string;
+  lastName?: string;
+  name?: string;
+  fullName?: string;
+}
+
 @Component({
   selector: 'app-student-sessions',
   standalone: true,
@@ -235,11 +243,44 @@ export class SessionsComponent implements OnInit {
           return (a.startTime || '').localeCompare(b.startTime || '');
         });
         this.isLoading = false;
+        // Fetch monitor names for sessions that only have monitorId
+        this.resolveMonitorNames();
       },
       error: (err) => {
         this.errorMsg = 'Erreur lors du chargement des séances: ' + (err.error?.message || err.message || 'Erreur inconnue');
         this.isLoading = false;
       }
+    });
+  }
+
+  resolveMonitorNames(): void {
+    // Collect unique monitorIds that don't yet have a name
+    const missingIds = [...new Set(
+      this.sessions
+        .filter(s => s.monitorId && (!s.monitorName || !s.monitorName.trim()))
+        .map(s => s.monitorId)
+    )];
+
+    if (missingIds.length === 0) return;
+
+    missingIds.forEach(monitorId => {
+      // Try to fetch monitor info via the admin endpoint
+      this.http.get<any>(`${environment.apiUrl}/admin/monitors`).subscribe({
+        next: (monitors: any[]) => {
+          const monitor = monitors.find((m: any) => m.id === monitorId || m.monitorId === monitorId);
+          if (monitor) {
+            const fullName = monitor.fullName || monitor.name ||
+              ((monitor.firstName || '') + ' ' + (monitor.lastName || '')).trim() ||
+              monitor.email || 'Moniteur';
+            this.sessions = this.sessions.map(s =>
+              s.monitorId === monitorId ? { ...s, monitorName: fullName } : s
+            );
+          }
+        },
+        error: () => {
+          // Silently fail — will show 'Moniteur' fallback
+        }
+      });
     });
   }
 

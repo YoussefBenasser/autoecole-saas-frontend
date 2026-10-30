@@ -13,6 +13,7 @@ interface Monitor {
   email?: string;
   telephone?: string;
   tenantName?: string;
+  profilePictureUrl?: string;
   user?: {
     prenom?: string;
     nom?: string;
@@ -20,6 +21,7 @@ interface Monitor {
     lastName?: string;
     email?: string;
     telephone?: string;
+    profilePictureUrl?: string;
   };
 }
 
@@ -86,7 +88,8 @@ interface Monitor {
             <tr *ngFor="let m of filteredMonitors; let i = index" class="table-row" [style.animation-delay]="(i * 0.04) + 's'">
               <td>
                 <div class="user-cell">
-                  <div class="avatar avatar-cyan">
+                  <img *ngIf="getAvatarUrl(m)" [src]="getAvatarUrl(m)" class="avatar avatar-img" (error)="onAvatarError(m)" alt="Photo" />
+                  <div class="avatar avatar-cyan" *ngIf="!getAvatarUrl(m)">
                     {{ getInitials(m) }}
                   </div>
                   <span class="user-name">{{ getFirstName(m) || '—' }}</span>
@@ -339,6 +342,11 @@ interface Monitor {
       box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
     }
 
+    .avatar-img {
+      object-fit: cover;
+      border: 1.5px solid rgba(255, 255, 255, 0.2);
+    }
+
     .user-name {
       font-weight: 600;
       color: #ffffff;
@@ -400,6 +408,20 @@ export class SuperAdminMonitorsComponent implements OnInit {
     const first = this.getFirstName(m);
     const last = this.getLastName(m);
     return `${first.charAt(0)}${last.charAt(0)}`.toUpperCase() || 'M';
+  }
+
+  getAvatarUrl(m: Monitor): string | null {
+    const pic = m.profilePictureUrl || m.user?.profilePictureUrl;
+    if (!pic) return null;
+    if (pic.startsWith('http://') || pic.startsWith('https://')) return pic;
+    return `${environment.apiUrl}${pic.startsWith('/') ? '' : '/'}${pic}`;
+  }
+
+  onAvatarError(monitor: any): void {
+    if (monitor) {
+      monitor.profilePictureUrl = undefined;
+      if (monitor.user) monitor.user.profilePictureUrl = undefined;
+    }
   }
 
   loadMonitors() {

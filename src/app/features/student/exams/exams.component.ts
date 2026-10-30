@@ -306,6 +306,12 @@ import { ExamResponse as Exam } from '../../../core/models/exam.model';
       border-color: rgba(239, 68, 68, 0.2);
     }
 
+    .status-badge.completed {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05));
+      color: #60a5fa;
+      border-color: rgba(59, 130, 246, 0.2);
+    }
+
     .score-cell {
       text-align: center;
       font-weight: 600;
@@ -400,18 +406,26 @@ export class ExamsComponent implements OnInit {
   }
 
   getStatusText(exam: Exam): string {
-    if (exam.status === 'SCHEDULED') return 'Planifié';
     if (exam.status === 'COMPLETED') {
       return exam.result === 'PASS' ? 'Réussi' : 'Échoué';
     }
-    return 'Annulé';
+    if (exam.status === 'CANCELLED') {
+      return 'Annulé';
+    }
+    
+    const isFuture = new Date(exam.date).getTime() > new Date().getTime();
+    return isFuture ? 'Planifié' : 'Terminé';
   }
 
   getStatusClass(exam: Exam): string {
-    if (exam.status === 'SCHEDULED') return 'scheduled';
     if (exam.status === 'COMPLETED') {
       return exam.result === 'PASS' ? 'passed' : 'failed';
     }
-    return 'scheduled';
+    if (exam.status === 'CANCELLED') {
+      return 'failed';
+    }
+
+    const isFuture = new Date(exam.date).getTime() > new Date().getTime();
+    return isFuture ? 'scheduled' : 'completed';
   }
 }
